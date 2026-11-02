@@ -47,10 +47,12 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # assert is how pytest works
+"tests/**" = ["S101"]                  # assert is how pytest works
+"alembic/versions/**" = ["E501"]       # generated migrations: long SQL/constraint lines are unavoidable
 
 [tool.ruff.lint.isort]
 known-first-party = ["app", "tests"]
+known-third-party = ["alembic"]  # the local alembic/ folder holds migrations; imports mean the library
 
 # ── mypy: static type checking ────────────────────────
 [tool.mypy]

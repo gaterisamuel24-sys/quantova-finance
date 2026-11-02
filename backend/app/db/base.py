@@ -8,11 +8,12 @@ from typing import Any, ClassVar
 from sqlalchemy import DateTime, MetaData, Numeric, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-# Deterministic constraint names. Without this, PostgreSQL invents names like
-# "users_email_key", and Alembic cannot reliably find constraints to alter or drop.
+# Deterministic constraint names. Without this, PostgreSQL invents names, and
+# Alembic cannot reliably find constraints to alter or drop later.
+# "_N_" variants include every column of multi-column constraints and indexes.
 NAMING_CONVENTION = {
-    "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ix": "ix_%(column_0_N_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
