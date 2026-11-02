@@ -1,14 +1,37 @@
 """FastAPI application factory.
 
 Run in development with:
-    uvicorn app.main:create_app --factory --reload
+    uv run uvicorn app.main:create_app --factory --reload
 """
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from redis.asyncio import Redis
 
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
+from app.db.session import create_engine, create_sessionmaker
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Create shared connection pools at startup and close them at shutdown."""
+    settings: Settings = app.state.settings
+
+    engine = create_engine(settings)
+    redis_client = Redis.from_url(settings.redis_url.get_secret_value(), decode_responses=True)
+
+    app.state.db_engine = engine
+    app.state.db_sessionmaker = create_sessionmaker(engine)
+    app.state.redis = redis_client
+    try:
+        yield
+    finally:
+        await redis_client.aclose()
+        await engine.dispose()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -19,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
+        lifespan=lifespan,
         # Interactive API docs are useful in development but expose the
         # full API surface, so they are disabled in production.
         docs_url=None if is_production else "/docs",
