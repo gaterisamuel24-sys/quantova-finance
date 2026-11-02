@@ -20,6 +20,9 @@ from app.core.config import Settings
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 SettingsFactory = Callable[..., Settings]
 
+# Obviously fake, 68 characters: passes the length check, never mistaken for a real key.
+TEST_JWT_SECRET = "test-" + "0123456789abcdef" * 4
+
 
 class IntegrationEnvironment(BaseSettings):
     """Connection details for the dedicated test services, from env vars or backend/.env."""
@@ -63,6 +66,7 @@ def settings_factory() -> SettingsFactory:
             "environment": "test",
             "database_url": "postgresql+asyncpg://test:test@127.0.0.1:5432/test",
             "redis_url": "redis://:test@127.0.0.1:6379/0",
+            "jwt_secret_key": TEST_JWT_SECRET,
         }
         values.update(overrides)
         return Settings(_env_file=None, **values)

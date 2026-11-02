@@ -12,14 +12,19 @@ ENV_EXAMPLE = Path(__file__).resolve().parents[1] / ".env.example"
 
 
 def test_missing_required_settings_fail_fast(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("DATABASE_URL", raising=False)
-    monkeypatch.delenv("REDIS_URL", raising=False)
+    for name in ("DATABASE_URL", "REDIS_URL", "JWT_SECRET_KEY"):
+        monkeypatch.delenv(name, raising=False)
 
     with pytest.raises(ValidationError) as exc_info:
         Settings(_env_file=None)
 
     missing = {error["loc"][0] for error in exc_info.value.errors()}
-    assert {"database_url", "redis_url"} <= missing
+    assert {"database_url", "redis_url", "jwt_secret_key"} <= missing
+
+
+def test_short_jwt_secret_is_rejected(settings_factory: SettingsFactory) -> None:
+    with pytest.raises(ValidationError, match="at least 32 characters"):
+        settings_factory(jwt_secret_key="too-short")
 
 
 def test_secrets_are_masked(settings_factory: SettingsFactory) -> None:
@@ -31,6 +36,7 @@ def test_secrets_are_masked(settings_factory: SettingsFactory) -> None:
     for leaked_view in (repr(settings), str(settings), str(settings.model_dump())):
         assert "supersecret" not in leaked_view
         assert "alsosecret" not in leaked_view
+        assert settings.jwt_secret_key.get_secret_value() not in leaked_view
 
     # The real value is still available when explicitly requested.
     assert "supersecret" in settings.database_url.get_secret_value()

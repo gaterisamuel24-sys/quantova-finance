@@ -3,8 +3,10 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+MIN_JWT_SECRET_LENGTH = 32
 
 
 class Settings(BaseSettings):
@@ -26,6 +28,24 @@ class Settings(BaseSettings):
     # Read the real value explicitly with .get_secret_value().
     database_url: SecretStr
     redis_url: SecretStr
+
+    # ── Authentication ─────────────────────────────────
+    jwt_secret_key: SecretStr
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    jwt_issuer: str = "quantova-api"
+    jwt_audience: str = "quantova-app"
+    access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
+    refresh_token_ttl_days: int = Field(default=14, ge=1, le=90)
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def jwt_secret_must_be_strong(cls, value: SecretStr) -> SecretStr:
+        if len(value.get_secret_value()) < MIN_JWT_SECRET_LENGTH:
+            raise ValueError(
+                f"JWT_SECRET_KEY must be at least {MIN_JWT_SECRET_LENGTH} characters; "
+                "generate 64 random hex characters (see backend/.env.example)"
+            )
+        return value
 
 
 @lru_cache
