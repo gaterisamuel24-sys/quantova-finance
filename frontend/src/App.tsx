@@ -12,9 +12,7 @@ type Health = {
 };
 
 type ApiState =
-  | { kind: "loading" }
-  | { kind: "ok"; data: Health }
-  | { kind: "error"; message: string };
+  { kind: "loading" } | { kind: "ok"; data: Health } | { kind: "error"; message: string };
 
 export default function App() {
   const [api, setApi] = useState<ApiState>({ kind: "loading" });
@@ -39,11 +37,7 @@ export default function App() {
   }, []);
 
   const dotColor =
-    api.kind === "ok"
-      ? "bg-emerald-400"
-      : api.kind === "error"
-        ? "bg-rose-500"
-        : "bg-amber-400";
+    api.kind === "ok" ? "bg-emerald-400" : api.kind === "error" ? "bg-rose-500" : "bg-amber-400";
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
@@ -51,12 +45,8 @@ export default function App() {
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
           Development build
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Quantova Finance
-        </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          AI-powered financial intelligence
-        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Quantova Finance</h1>
+        <p className="mt-1 text-sm text-slate-400">AI-powered financial intelligence</p>
 
         <div className="mt-8 flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
           <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />

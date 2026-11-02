@@ -18,6 +18,8 @@ dev = [
     "pytest",
     "pytest-cov",
     "httpx2",
+    "ruff",
+    "mypy",
 ]
 
 [tool.setuptools.packages.find]
@@ -27,3 +29,39 @@ include = ["app*"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+
+# ── Ruff: linting + formatting ────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle errors and warnings
+    "F",       # pyflakes: undefined names, unused imports
+    "I",       # import sorting
+    "B",       # bugbear: likely bugs and design problems
+    "UP",      # pyupgrade: modern Python syntax
+    "S",       # bandit: security issues
+    "SIM",     # simplifications
+    "N",       # naming conventions
+    "RUF",     # Ruff-specific rules
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is how pytest works
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests"]
+
+# ── mypy: static type checking ────────────────────────
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["app", "tests"]
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
