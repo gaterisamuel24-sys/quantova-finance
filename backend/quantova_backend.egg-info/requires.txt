@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-pydantic-settings
-
-[dev]
-pytest
-pytest-cov
-httpx2
