@@ -17,3 +17,16 @@ class OrgRole(StrEnum):
     ADMIN = "admin"
     ANALYST = "analyst"
     VIEWER = "viewer"
+
+
+_ORG_ROLE_RANK = {
+    OrgRole.VIEWER: 1,
+    OrgRole.ANALYST: 2,
+    OrgRole.ADMIN: 3,
+    OrgRole.OWNER: 4,
+}
+
+
+def org_role_at_least(role: OrgRole, minimum: OrgRole) -> bool:
+    """True if `role` grants at least the permissions of `minimum`."""
+    return _ORG_ROLE_RANK[role] >= _ORG_ROLE_RANK[minimum]
