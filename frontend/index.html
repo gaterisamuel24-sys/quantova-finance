@@ -2,9 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta
+      name="description"
+      content="Quantova Finance: AI-powered financial intelligence for businesses and analysts."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Quantova Finance</title>
+    <script>
+      // Apply the saved theme before the first paint, so dark-theme users never see a white flash.
+      (function () {
+        try {
+          var stored = localStorage.getItem("quantova-theme");
+          var system = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (stored === "dark" || ((stored === null || stored === "system") && system)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {
+          // Storage unavailable: the theme provider falls back to the system theme.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Dark mode is controlled by a "dark" class on <html> (set by the theme provider),
+   so users can override their operating-system preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Semantic design tokens ──────────────────────────────────────────────
+   Components use these names, never raw palette colours. Themes and future
+   rebrands change values here only. Colours are OKLCH: lightness, chroma, hue. */
+:root {
+  --background: oklch(0.985 0.002 260);
+  --surface: oklch(1 0 0);
+  --surface-muted: oklch(0.965 0.004 260);
+  --foreground: oklch(0.21 0.02 265);
+  --muted-foreground: oklch(0.52 0.02 262);
+  --border: oklch(0.91 0.006 260);
+  --ring: oklch(0.58 0.2 277);
+  --brand: oklch(0.52 0.21 277);
+  --brand-foreground: oklch(0.99 0 0);
+  --positive: oklch(0.58 0.15 155);
+  --negative: oklch(0.58 0.2 22);
+  --warning: oklch(0.72 0.15 75);
+}
+
+.dark {
+  --background: oklch(0.155 0.012 265);
+  --surface: oklch(0.195 0.014 265);
+  --surface-muted: oklch(0.235 0.016 265);
+  --foreground: oklch(0.96 0.004 260);
+  --muted-foreground: oklch(0.7 0.015 262);
+  --border: oklch(0.29 0.016 265);
+  --ring: oklch(0.68 0.17 277);
+  --brand: oklch(0.66 0.18 277);
+  --brand-foreground: oklch(0.16 0.02 270);
+  --positive: oklch(0.74 0.15 155);
+  --negative: oklch(0.7 0.18 22);
+  --warning: oklch(0.82 0.14 80);
+}
+
+/* Expose the tokens to Tailwind: bg-surface, text-positive, border-border, ... */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
