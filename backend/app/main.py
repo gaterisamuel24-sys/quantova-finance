@@ -1,4 +1,8 @@
-"""FastAPI application factory and ASGI entry point."""
+"""FastAPI application factory.
+
+Run in development with:
+    uvicorn app.main:create_app --factory --reload
+"""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +37,3 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     return app
-
-
-app = create_app()

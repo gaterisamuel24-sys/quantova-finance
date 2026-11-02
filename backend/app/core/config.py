@@ -3,6 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,11 +14,18 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # ── Application ────────────────────────────────────
     app_name: str = "Quantova Finance API"
     app_version: str = "0.1.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     api_v1_prefix: str = "/api/v1"
     cors_origins: list[str] = ["http://localhost:5173"]
+
+    # ── Infrastructure (required, no defaults) ─────────
+    # SecretStr masks the value as '**********' in repr(), logs and error messages.
+    # Read the real value explicitly with .get_secret_value().
+    database_url: SecretStr
+    redis_url: SecretStr
 
 
 @lru_cache

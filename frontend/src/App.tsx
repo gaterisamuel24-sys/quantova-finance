@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { apiUrl } from "./lib/config";
+
 // Mirrors HealthResponse in backend/app/schemas/health.py.
 // In Phase 3 these types will be generated from the OpenAPI spec automatically.
 type Health = {
@@ -20,7 +22,7 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/v1/health", { signal: controller.signal })
+    fetch(apiUrl("/api/v1/health"), { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         setApi({ kind: "ok", data: (await response.json()) as Health });

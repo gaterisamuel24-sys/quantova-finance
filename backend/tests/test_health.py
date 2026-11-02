@@ -2,12 +2,12 @@
 
 from fastapi.testclient import TestClient
 
-from app.core.config import Settings
 from app.main import create_app
+from tests.conftest import SettingsFactory
 
 
-def test_health_returns_ok() -> None:
-    client = TestClient(create_app(Settings(environment="test")))
+def test_health_returns_ok(settings_factory: SettingsFactory) -> None:
+    client = TestClient(create_app(settings_factory()))
 
     response = client.get("/api/v1/health")
 
@@ -18,15 +18,15 @@ def test_health_returns_ok() -> None:
     assert body["environment"] == "test"
 
 
-def test_docs_available_outside_production() -> None:
-    client = TestClient(create_app(Settings(environment="development")))
+def test_docs_available_outside_production(settings_factory: SettingsFactory) -> None:
+    client = TestClient(create_app(settings_factory(environment="development")))
 
     assert client.get("/docs").status_code == 200
     assert client.get("/openapi.json").status_code == 200
 
 
-def test_docs_disabled_in_production() -> None:
-    client = TestClient(create_app(Settings(environment="production")))
+def test_docs_disabled_in_production(settings_factory: SettingsFactory) -> None:
+    client = TestClient(create_app(settings_factory(environment="production")))
 
     assert client.get("/docs").status_code == 404
     assert client.get("/openapi.json").status_code == 404
