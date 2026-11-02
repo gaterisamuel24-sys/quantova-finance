@@ -8,19 +8,12 @@ version = "0.1.0"
 description = "Quantova Finance API"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "pydantic-settings",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "httpx2",
-    "ruff",
-    "mypy",
-    "pre-commit",
+    "alembic>=1.20.1",
+    "asyncpg>=0.32.0",
+    "fastapi>=0.162.0",
+    "pydantic-settings>=2.16.2",
+    "sqlalchemy[asyncio]>=2.1.6",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -66,3 +59,13 @@ plugins = ["pydantic.mypy"]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "mypy>=2.4.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.3",
+]
