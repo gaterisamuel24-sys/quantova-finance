@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
     refresh_token_ttl_days: int = Field(default=14, ge=1, le=90)
 
+    # ── Abuse protection ───────────────────────────────
+    rate_limit_enabled: bool = True
+
     @field_validator("jwt_secret_key")
     @classmethod
     def jwt_secret_must_be_strong(cls, value: SecretStr) -> SecretStr:

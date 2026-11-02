@@ -1,23 +1,61 @@
 """Authentication endpoints."""
 
+import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
 from app.api.deps import ClientInfoDep, CurrentUser, SessionDep, SettingsDep
 from app.core.config import Settings
+from app.core.rate_limit import (
+    LOGIN_PER_EMAIL,
+    LOGIN_PER_IP,
+    REFRESH_PER_IP,
+    REGISTER_PER_IP,
+    RateLimit,
+    RateLimiter,
+    hashed_identifier,
+)
 from app.models import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.schemas.user import UserResponse
 from app.services import auth as auth_service
+from app.services.audit import ClientInfo
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 REFRESH_COOKIE_NAME = "quantova_refresh"
 SECONDS_PER_DAY = 86_400
 
 RefreshCookie = Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)]
+
+
+# ── Rate limiting ─────────────────────────────────────
+
+
+def get_rate_limiter(request: Request) -> RateLimiter:
+    settings: Settings = request.app.state.settings
+    return RateLimiter(request.app.state.redis, enabled=settings.rate_limit_enabled)
+
+
+RateLimiterDep = Annotated[RateLimiter, Depends(get_rate_limiter)]
+
+
+def _client_key(client: ClientInfo) -> str:
+    return client.ip_address or "unknown"
+
+
+async def _enforce(limiter: RateLimiter, rule: RateLimit, identifier: str) -> None:
+    decision = await limiter.hit(rule, identifier)
+    if not decision.allowed:
+        logger.warning("Rate limit exceeded: %s", rule.name)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many attempts. Please try again later.",
+            headers={"Retry-After": str(decision.retry_after_seconds)},
+        )
 
 
 # ── Cookie helpers ────────────────────────────────────
@@ -75,7 +113,13 @@ def _session_rejected(settings: Settings) -> JSONResponse:
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, session: SessionDep, client: ClientInfoDep) -> User:
+async def register(
+    payload: RegisterRequest,
+    session: SessionDep,
+    client: ClientInfoDep,
+    limiter: RateLimiterDep,
+) -> User:
+    await _enforce(limiter, REGISTER_PER_IP, _client_key(client))
     try:
         return await auth_service.register_user(
             session,
@@ -98,7 +142,10 @@ async def login(
     session: SessionDep,
     settings: SettingsDep,
     client: ClientInfoDep,
+    limiter: RateLimiterDep,
 ) -> TokenResponse:
+    await _enforce(limiter, LOGIN_PER_IP, _client_key(client))
+    await _enforce(limiter, LOGIN_PER_EMAIL, hashed_identifier(payload.email))
     try:
         tokens = await auth_service.login(
             session,
@@ -124,8 +171,10 @@ async def refresh(
     session: SessionDep,
     settings: SettingsDep,
     client: ClientInfoDep,
+    limiter: RateLimiterDep,
     refresh_token: RefreshCookie = None,
 ) -> TokenResponse | JSONResponse:
+    await _enforce(limiter, REFRESH_PER_IP, _client_key(client))
     if refresh_token is None:
         return _session_rejected(settings)
     try:

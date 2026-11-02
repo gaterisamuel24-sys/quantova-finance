@@ -67,6 +67,7 @@ def settings_factory() -> SettingsFactory:
             "database_url": "postgresql+asyncpg://test:test@127.0.0.1:5432/test",
             "redis_url": "redis://:test@127.0.0.1:6379/0",
             "jwt_secret_key": TEST_JWT_SECRET,
+            "rate_limit_enabled": False,
         }
         values.update(overrides)
         return Settings(_env_file=None, **values)
