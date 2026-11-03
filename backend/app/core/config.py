@@ -40,6 +40,26 @@ class Settings(BaseSettings):
     # ── Abuse protection ───────────────────────────────
     rate_limit_enabled: bool = True
 
+    # ── AI insights (optional) ─────────────────────────
+    # Without OPENAI_API_KEY the AI features are switched off; everything else works.
+    openai_api_key: SecretStr | None = None
+    openai_model: str = Field(default="gpt-5.4-mini", min_length=1, max_length=100)
+    ai_request_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
+    ai_max_output_tokens: int = Field(default=1500, ge=200, le=8000)
+    ai_daily_insights_per_org: int = Field(default=20, ge=1, le=1000)
+
+    @property
+    def ai_enabled(self) -> bool:
+        return self.openai_api_key is not None
+
+    @field_validator("openai_api_key", mode="before")
+    @classmethod
+    def blank_key_means_no_key(cls, value: object) -> object:
+        # "OPENAI_API_KEY=" in .env (an empty value) must switch AI off, not send "" to OpenAI.
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        return value
+
     @field_validator("jwt_secret_key")
     @classmethod
     def jwt_secret_must_be_strong(cls, value: SecretStr) -> SecretStr:
