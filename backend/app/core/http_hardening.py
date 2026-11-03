@@ -38,9 +38,28 @@ _HSTS = (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
 
 
 class SecurityHeadersMiddleware:
-    def __init__(self, app: ASGIApp, *, hsts: bool) -> None:
+    """Security headers for every response.
+
+    API paths get a policy that allows nothing to run. Other paths (the built frontend,
+    served in production) get the frontend's own policy plus frame-ancestors 'none'.
+    """
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        hsts: bool,
+        api_prefix: str = "/api",
+        frontend_csp: str | None = None,
+    ) -> None:
         self.app = app
         self.hsts = hsts
+        self.api_prefix = api_prefix.rstrip("/")
+        self.frontend_csp = (
+            (b"content-security-policy", f"{frontend_csp}; frame-ancestors 'none'".encode())
+            if frontend_csp
+            else None
+        )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -48,13 +67,19 @@ class SecurityHeadersMiddleware:
             return
         path: str = scope.get("path", "")
         is_docs = path.startswith(_DOCS_PATHS)
+        is_frontend = self.frontend_csp is not None and not (
+            path == self.api_prefix or path.startswith(self.api_prefix + "/") or is_docs
+        )
 
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
                 names = {name.lower() for name, _ in headers}
                 extra = list(_BASE_HEADERS)
-                if not is_docs:
+                if is_frontend and self.frontend_csp is not None:
+                    # Caching for app files is set by the route (app/web.py).
+                    extra.append(self.frontend_csp)
+                elif not is_docs:
                     extra.append(_API_CSP)
                     # Financial data must never sit in a shared or browser cache.
                     if b"cache-control" not in names:

@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     # Where the browser returns after Stripe Checkout or the billing portal.
     app_base_url: str = "http://localhost:5173"
 
+    # ── Frontend ───────────────────────────────────────
+    # In production the API also serves the built frontend from this folder (set in the
+    # Docker image), so the app and the API share one origin. Unset in development.
+    frontend_dist_dir: str | None = None
+
     @property
     def ai_enabled(self) -> bool:
         return self.openai_api_key is not None

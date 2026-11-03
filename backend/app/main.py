@@ -6,6 +6,7 @@ Run in development with:
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +21,7 @@ from app.core.http_hardening import (
     SecurityHeadersMiddleware,
 )
 from app.db.session import create_engine, create_sessionmaker
+from app.web import mount_frontend, read_frontend_csp
 
 # The largest legitimate request is a 5 MB CSV import; allow some room for the form encoding.
 MAX_REQUEST_BYTES = 6 * 1024 * 1024
@@ -71,11 +73,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_REQUEST_BYTES)
+    frontend_dist = Path(settings.frontend_dist_dir) if settings.frontend_dist_dir else None
     app.add_middleware(
-        SecurityHeadersMiddleware, hsts=settings.environment in ("staging", "production")
+        SecurityHeadersMiddleware,
+        hsts=settings.environment in ("staging", "production"),
+        api_prefix="/api",
+        frontend_csp=read_frontend_csp(frontend_dist) if frontend_dist else None,
     )
     app.add_middleware(RequestIdMiddleware)
     install_error_handlers(app)
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    if frontend_dist is not None:
+        # Last, so every API route takes precedence over the app's catch-all route.
+        mount_frontend(app, frontend_dist, api_prefix=settings.api_v1_prefix)
     return app
