@@ -1,3 +1,4 @@
+import type { components } from "../lib/api/schema";
 import { json, type FetchHandler } from "./fake-api";
 
 export const PASSWORD = "correct horse battery staple";
@@ -11,6 +12,12 @@ type FakeUser = {
   created_at: string;
 };
 
+type OrgRole = components["schemas"]["OrganizationResponse"]["my_role"];
+type Account = components["schemas"]["AccountResponse"];
+type Category = components["schemas"]["CategoryResponse"];
+type Transaction = components["schemas"]["TransactionResponse"];
+type ImportReport = components["schemas"]["ImportReport"];
+
 export type FakeOrganization = {
   id: string;
   name: string;
@@ -18,7 +25,15 @@ export type FakeOrganization = {
   base_currency: string;
   fiscal_year_start_month: number;
   created_at: string;
-  my_role: "owner";
+  my_role: OrgRole;
+};
+
+/** One organization's ledger: a starter account, two categories and its transactions. */
+export type FakeLedger = {
+  account: Account;
+  sales: Category;
+  rent: Category;
+  transactions: Transaction[];
 };
 
 function makeUser(email: string, fullName: string): FakeUser {
@@ -32,7 +47,11 @@ function makeUser(email: string, fullName: string): FakeUser {
   };
 }
 
-export function makeOrganization(name: string, baseCurrency = "USD"): FakeOrganization {
+export function makeOrganization(
+  name: string,
+  baseCurrency = "USD",
+  role: OrgRole = "owner",
+): FakeOrganization {
   return {
     id: crypto.randomUUID(),
     name,
@@ -40,27 +59,165 @@ export function makeOrganization(name: string, baseCurrency = "USD"): FakeOrgani
     base_currency: baseCurrency,
     fiscal_year_start_month: 1,
     created_at: "2026-11-03T08:00:00Z",
-    my_role: "owner",
+    my_role: role,
   };
+}
+
+export function makeLedger(currency = "USD"): FakeLedger {
+  const category = (name: string, kind: "income" | "expense"): Category => ({
+    id: crypto.randomUUID(),
+    name,
+    kind,
+    is_system: true,
+    is_archived: false,
+  });
+  return {
+    account: {
+      id: crypto.randomUUID(),
+      name: "Main account",
+      account_type: "bank",
+      currency,
+      opening_balance: "0.0000",
+      is_archived: false,
+    },
+    sales: category("Sales", "income"),
+    rent: category("Rent & utilities", "expense"),
+    transactions: [],
+  };
+}
+
+/** A stored transaction, as the API returns it (amounts with 4 decimal places). */
+export function makeTransaction(ledger: FakeLedger, fields: Partial<Transaction>): Transaction {
+  return {
+    id: crypto.randomUUID(),
+    kind: "income",
+    amount: "100.0000",
+    currency: ledger.account.currency,
+    occurred_on: "2026-10-15",
+    account_id: ledger.account.id,
+    category_id: ledger.sales.id,
+    description: "Consulting invoice",
+    counterparty: null,
+    reference: null,
+    created_at: "2026-11-03T08:00:00Z",
+    updated_at: "2026-11-03T08:00:00Z",
+    ...fields,
+  };
+}
+
+/** "1250.5" → "1250.5000", like PostgreSQL's NUMERIC(19,4). */
+function storedAmount(amount: string): string {
+  const [whole, fraction = ""] = amount.split(".");
+  return `${whole}.${fraction.padEnd(4, "0")}`;
 }
 
 const token = (value: string) => ({ access_token: value, token_type: "bearer", expires_in: 900 });
 
-type Options = { signedIn?: boolean; organizations?: FakeOrganization[] };
+type Options = {
+  signedIn?: boolean;
+  organizations?: FakeOrganization[];
+  /** Ledgers by organization id. Organizations without one get an empty ledger. */
+  ledgers?: Record<string, FakeLedger>;
+  /** What POST .../transactions/import answers for a dry run. */
+  importReport?: ImportReport;
+};
 
-/** A simulated API that follows the real backend's rules for auth and organizations. */
+const LEDGER_PATH = /^\/api\/v1\/orgs\/([^/]+)\/(accounts|categories|transactions)(?:\/(.+))?$/;
+
+/** A simulated API that follows the real backend's rules for auth, organizations and the ledger. */
 export function createFakeBackend({
   signedIn = false,
   organizations = [],
+  ledgers = {},
+  importReport,
 }: Options = {}): FetchHandler {
   const amina = makeUser("amina@example.com", "Amina Otieno");
   const accounts = new Map([[amina.email, { password: PASSWORD, user: amina }]]);
   const orgs = [...organizations];
   let current: FakeUser | null = signedIn ? amina : null;
 
+  function ledgerFor(orgId: string): FakeLedger | undefined {
+    const organization = orgs.find((candidate) => candidate.id === orgId);
+    if (!organization) return undefined;
+    ledgers[orgId] ??= makeLedger(organization.base_currency);
+    return ledgers[orgId];
+  }
+
+  async function handleLedger(
+    request: Request,
+    url: URL,
+    [, orgId, resource, rest]: RegExpMatchArray,
+  ): Promise<Response> {
+    const ledger = ledgerFor(orgId);
+    if (!ledger) return json(404, { detail: "Organization not found." });
+
+    if (resource === "accounts") return json(200, [ledger.account]);
+    if (resource === "categories") return json(200, [ledger.sales, ledger.rent]);
+
+    if (rest === "import") {
+      const dryRun = url.searchParams.get("dry_run") === "true";
+      const report = importReport ?? {
+        status: "validated",
+        filename: "bank.csv",
+        row_count: 2,
+        imported_count: 0,
+        error_count: 0,
+        errors: [],
+      };
+      if (dryRun || report.status === "rejected") return json(200, report);
+      return json(200, { ...report, status: "imported", imported_count: report.row_count });
+    }
+
+    if (rest !== undefined) {
+      const index = ledger.transactions.findIndex((item) => item.id === rest);
+      if (index === -1) return json(404, { detail: "Transaction not found." });
+      if (request.method === "DELETE") {
+        ledger.transactions.splice(index, 1);
+        return json(204);
+      }
+      const changes = (await request.json()) as Partial<Transaction>;
+      const updated = { ...ledger.transactions[index], ...changes };
+      if (changes.amount !== undefined) updated.amount = storedAmount(String(changes.amount));
+      ledger.transactions[index] = updated;
+      return json(200, updated);
+    }
+
+    if (request.method === "POST") {
+      const body = (await request.json()) as Partial<Transaction>;
+      const created = makeTransaction(ledger, {
+        ...body,
+        amount: storedAmount(String(body.amount)),
+      });
+      ledger.transactions.push(created);
+      return json(201, created);
+    }
+
+    const kind = url.searchParams.get("kind");
+    const q = url.searchParams.get("q")?.toLowerCase();
+    const page = Number(url.searchParams.get("page") ?? "1");
+    const pageSize = Number(url.searchParams.get("page_size") ?? "25");
+    const matching = ledger.transactions
+      .filter((item) => !kind || item.kind === kind)
+      .filter((item) => !q || item.description.toLowerCase().includes(q))
+      .sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
+    return json(200, {
+      items: matching.slice((page - 1) * pageSize, page * pageSize),
+      total: matching.length,
+      page,
+      page_size: pageSize,
+    });
+  }
+
   return async (request) => {
-    const path = new URL(request.url).pathname;
+    const url = new URL(request.url);
+    const path = url.pathname;
     const authorized = current !== null && request.headers.has("Authorization");
+
+    const ledgerMatch = LEDGER_PATH.exec(path);
+    if (ledgerMatch) {
+      if (!authorized) return json(401, { detail: "Not authenticated" });
+      return handleLedger(request, url, ledgerMatch);
+    }
 
     switch (path) {
       case "/api/v1/auth/refresh":

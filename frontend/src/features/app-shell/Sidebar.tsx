@@ -22,7 +22,7 @@ type NavItem = { label: string; Icon: LucideIcon; path?: string };
 // Items without a path are coming in later phases and render as disabled.
 const NAV_ITEMS: NavItem[] = [
   { label: "Overview", Icon: LayoutDashboard, path: "" },
-  { label: "Transactions", Icon: ArrowLeftRight },
+  { label: "Transactions", Icon: ArrowLeftRight, path: "transactions" },
   { label: "Cash flow", Icon: Wallet },
   { label: "Reports", Icon: FileText },
   { label: "AI insights", Icon: Sparkles },

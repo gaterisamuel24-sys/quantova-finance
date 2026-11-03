@@ -11,6 +11,7 @@ import { CreateOrganizationPage } from "../features/organizations/CreateOrganiza
 import { DesignPreviewPage } from "../features/system/DesignPreviewPage";
 import { NotFoundPage } from "../features/system/NotFoundPage";
 import { RouteErrorPage } from "../features/system/RouteErrorPage";
+import { TransactionsPage } from "../features/transactions/TransactionsPage";
 
 /** Every URL in the app and the page it renders. */
 export const routes: RouteObject[] = [
@@ -34,7 +35,15 @@ export const routes: RouteObject[] = [
           {
             path: "/app/:orgId",
             element: <AppShell />,
-            children: [{ index: true, element: <DashboardPage /> }],
+            // `handle.title` is shown in the top bar of the app shell.
+            children: [
+              { index: true, element: <DashboardPage />, handle: { title: "Overview" } },
+              {
+                path: "transactions",
+                element: <TransactionsPage />,
+                handle: { title: "Transactions" },
+              },
+            ],
           },
         ],
       },

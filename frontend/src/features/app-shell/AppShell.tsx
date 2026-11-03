@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, Outlet, useParams } from "react-router";
+import { Link, Outlet, useMatches, useParams } from "react-router";
 
 import { FullPageSpinner } from "../../components/FullPageSpinner";
 import { SkipLink } from "../../components/SkipLink";
@@ -12,12 +12,23 @@ import { MobileNav } from "./MobileNav";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
+/** The `handle.title` of the deepest matching route, e.g. "Transactions". */
+function usePageTitle(): string {
+  const matches = useMatches();
+  for (const match of [...matches].reverse()) {
+    const handle = match.handle as { title?: unknown } | undefined;
+    if (typeof handle?.title === "string") return handle.title;
+  }
+  return "Overview";
+}
+
 export function AppShell() {
   const { orgId } = useParams();
   const { data: organizations, isPending, isError, refetch } = useOrganizations();
   const [navOpen, setNavOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
   const organization = organizations?.find((candidate) => candidate.id === orgId);
+  const title = usePageTitle();
 
   useEffect(() => {
     if (organization) rememberLastOrganization(organization.id);
@@ -68,7 +79,7 @@ export function AppShell() {
         </MobileNav>
       )}
       <div className="flex min-w-0 flex-col">
-        <TopBar title="Overview" onOpenNav={() => setNavOpen(true)} />
+        <TopBar title={title} onOpenNav={() => setNavOpen(true)} />
         <main
           id="main-content"
           tabIndex={-1}
