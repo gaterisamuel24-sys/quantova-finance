@@ -2,9 +2,10 @@
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.api.deps import ClientInfoDep, CurrentUser, OrgAdmin, OrgViewer, SessionDep, SettingsDep
+from app.api.limits import MEMBER_INVITES_PER_USER, rate_limited
 from app.models import Membership, Organization, OrgRole, User
 from app.repositories import organizations as org_repo
 from app.schemas.organization import (
@@ -125,7 +126,10 @@ async def list_members(ctx: OrgViewer, session: SessionDep) -> list[MemberRespon
 
 
 @router.post(
-    "/{org_id}/members", response_model=MemberResponse, status_code=status.HTTP_201_CREATED
+    "/{org_id}/members",
+    response_model=MemberResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limited(MEMBER_INVITES_PER_USER))],
 )
 async def add_member(
     payload: MemberAdd,

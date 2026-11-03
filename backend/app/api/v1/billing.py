@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 
 from app.api.deps import ClientInfoDep, OrgOwner, OrgViewer, SessionDep, SettingsDep
+from app.api.limits import CHECKOUT_PER_USER, PORTAL_PER_USER, rate_limited
 from app.schemas.billing import BillingResponse, billing_response
 from app.services.billing import service as billing_service
 from app.services.billing.entitlements import get_entitlements
@@ -62,7 +63,11 @@ async def get_billing(
     return billing_response(entitlements, billing_enabled=settings.billing_enabled)
 
 
-@router.post("/checkout", response_model=RedirectResponse)
+@router.post(
+    "/checkout",
+    response_model=RedirectResponse,
+    dependencies=[Depends(rate_limited(CHECKOUT_PER_USER))],
+)
 async def start_checkout(
     payload: CheckoutStart,
     ctx: OrgOwner,
@@ -83,7 +88,11 @@ async def start_checkout(
     return RedirectResponse(url=url)
 
 
-@router.post("/portal", response_model=RedirectResponse)
+@router.post(
+    "/portal",
+    response_model=RedirectResponse,
+    dependencies=[Depends(rate_limited(PORTAL_PER_USER))],
+)
 async def open_portal(
     ctx: OrgOwner,
     session: SessionDep,

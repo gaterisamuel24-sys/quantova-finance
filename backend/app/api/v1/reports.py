@@ -7,9 +7,10 @@ recorded in the audit log, because an export takes data outside the platform.
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.deps import ClientInfoDep, OrgViewer, SessionDep
+from app.api.limits import EXPORTS_PER_USER, rate_limited
 from app.api.v1.analytics import RangeDep, ReportRange
 from app.models import EntryKind
 from app.repositories import reports as reports_repo
@@ -19,7 +20,12 @@ from app.services.analytics_math import MAX_BUCKETS, Granularity, bucket_starts
 from app.services.audit import ClientInfo, record_audit_event
 from app.services.organizations import OrgContext
 
-router = APIRouter(prefix="/orgs/{org_id}/reports", tags=["reports"])
+# Every download counts toward the per-user export limit.
+router = APIRouter(
+    prefix="/orgs/{org_id}/reports",
+    tags=["reports"],
+    dependencies=[Depends(rate_limited(EXPORTS_PER_USER))],
+)
 
 MAX_EXPORT_ROWS = 50_000
 CSV_MEDIA_TYPE = "text/csv; charset=utf-8"

@@ -2,9 +2,10 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, status
 
 from app.api.deps import ClientInfoDep, OrgAnalyst, OrgViewer, SessionDep
+from app.api.limits import IMPORTS_PER_USER, rate_limited
 from app.schemas.imports import ImportReport
 from app.services import imports as import_service
 from app.services.csv_import import MAX_IMPORT_BYTES, TEMPLATE_CSV, CsvFormatError
@@ -24,7 +25,11 @@ async def download_template(ctx: OrgViewer) -> Response:
     )
 
 
-@router.post("", response_model=ImportReport)
+@router.post(
+    "",
+    response_model=ImportReport,
+    dependencies=[Depends(rate_limited(IMPORTS_PER_USER))],
+)
 async def import_transactions(
     file: UploadFile,
     ctx: OrgAnalyst,

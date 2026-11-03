@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import ClientInfoDep, OrgAnalyst, OrgViewer, SessionDep, SettingsDep
+from app.api.limits import AI_INSIGHTS_PER_USER, rate_limited
 from app.schemas.insights import InsightList, InsightRequest, InsightResponse
 from app.services.ai.model import AIProviderError, AIUnavailableError, InsightModel
 from app.services.ai.openai_model import build_insight_model
@@ -45,7 +46,12 @@ async def list_insights(ctx: OrgViewer, session: SessionDep, settings: SettingsD
     )
 
 
-@router.post("", response_model=InsightResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=InsightResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limited(AI_INSIGHTS_PER_USER))],
+)
 async def generate_insight(
     payload: InsightRequest,
     ctx: OrgAnalyst,
