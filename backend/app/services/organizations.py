@@ -6,6 +6,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,7 @@ from app.models import Membership, Organization, OrgRole, User
 from app.repositories import organizations as org_repo
 from app.repositories import users as user_repo
 from app.services.audit import ClientInfo, record_audit_event
+from app.services.billing.entitlements import member_allowance
 from app.services.defaults import add_default_ledger
 
 MAX_SLUG_BASE_LENGTH = 80
@@ -41,6 +43,10 @@ class RoleChangeForbiddenError(OrganizationError):
 
 class LastOwnerError(OrganizationError):
     pass
+
+
+class MemberLimitReachedError(OrganizationError):
+    """The organization's plan allows no more members."""
 
 
 @dataclass(frozen=True)
@@ -153,7 +159,13 @@ async def update_organization(
 
 
 async def add_member(
-    session: AsyncSession, ctx: OrgContext, *, email: str, role: OrgRole, client: ClientInfo
+    session: AsyncSession,
+    ctx: OrgContext,
+    *,
+    email: str,
+    role: OrgRole,
+    client: ClientInfo,
+    enforce_limit: bool = True,
 ) -> tuple[Membership, User]:
     _ensure_can_manage(ctx.role, role)
 
@@ -165,6 +177,16 @@ async def add_member(
     )
     if existing is not None:
         raise MemberAlreadyExistsError
+
+    if enforce_limit:
+        # Lock the organization row so two simultaneous invitations cannot both slip in
+        # under the limit; the lock is released when this transaction ends.
+        await session.execute(
+            select(Organization.id).where(Organization.id == ctx.organization.id).with_for_update()
+        )
+        plan, members = await member_allowance(session, ctx.organization.id)
+        if members >= plan.max_members:
+            raise MemberLimitReachedError
 
     membership = Membership(user_id=user.id, organization_id=ctx.organization.id, role=role)
     session.add(membership)

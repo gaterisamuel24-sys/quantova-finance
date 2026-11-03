@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # ── Abuse protection ───────────────────────────────
     rate_limit_enabled: bool = True
 
+    # ── Plan limits ────────────────────────────────────
+    # Members per organization follow the plan (Free 1, Pro 5, Business 25). Only the test
+    # suite turns this off, so tests that need several members don't each need a paid plan.
+    enforce_member_limits: bool = True
+
     # ── AI insights (optional) ─────────────────────────
     # Without OPENAI_API_KEY the AI features are switched off; everything else works.
     openai_api_key: SecretStr | None = None

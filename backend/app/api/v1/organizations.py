@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Response, status
 
-from app.api.deps import ClientInfoDep, CurrentUser, OrgAdmin, OrgViewer, SessionDep
+from app.api.deps import ClientInfoDep, CurrentUser, OrgAdmin, OrgViewer, SessionDep, SettingsDep
 from app.models import Membership, Organization, OrgRole, User
 from app.repositories import organizations as org_repo
 from app.schemas.organization import (
@@ -36,6 +36,10 @@ _ERROR_RESPONSES: dict[type[org_service.OrganizationError], tuple[int, str]] = {
     org_service.LastOwnerError: (
         status.HTTP_409_CONFLICT,
         "An organization must keep at least one owner.",
+    ),
+    org_service.MemberLimitReachedError: (
+        status.HTTP_402_PAYMENT_REQUIRED,
+        "This plan's member limit has been reached. Upgrade the plan to add more members.",
     ),
 }
 
@@ -124,11 +128,20 @@ async def list_members(ctx: OrgViewer, session: SessionDep) -> list[MemberRespon
     "/{org_id}/members", response_model=MemberResponse, status_code=status.HTTP_201_CREATED
 )
 async def add_member(
-    payload: MemberAdd, ctx: OrgAdmin, session: SessionDep, client: ClientInfoDep
+    payload: MemberAdd,
+    ctx: OrgAdmin,
+    session: SessionDep,
+    settings: SettingsDep,
+    client: ClientInfoDep,
 ) -> MemberResponse:
     try:
         membership, user = await org_service.add_member(
-            session, ctx, email=payload.email, role=payload.role, client=client
+            session,
+            ctx,
+            email=payload.email,
+            role=payload.role,
+            client=client,
+            enforce_limit=settings.enforce_member_limits,
         )
     except org_service.OrganizationError as exc:
         raise _http_error(exc) from exc

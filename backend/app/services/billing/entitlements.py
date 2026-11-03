@@ -40,6 +40,19 @@ async def get_subscription(
     )
 
 
+async def member_allowance(session: AsyncSession, organization_id: uuid.UUID) -> tuple[Plan, int]:
+    """The plan that applies now, and how many members the organization has."""
+    subscription = await get_subscription(session, organization_id)
+    plan = effective_plan(
+        subscription.plan if subscription else None,
+        subscription.status if subscription else None,
+    )
+    members = await session.scalar(
+        select(func.count(Membership.id)).where(Membership.organization_id == organization_id)
+    )
+    return plan, int(members or 0)
+
+
 async def get_entitlements(
     session: AsyncSession, organization_id: uuid.UUID, settings: Settings, *, now: datetime
 ) -> Entitlements:
