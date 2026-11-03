@@ -53,6 +53,10 @@
       },
       "BillingResponse": {
         "properties": {
+          "billing_enabled": {
+            "title": "Billing Enabled",
+            "type": "boolean"
+          },
           "cancel_at_period_end": {
             "title": "Cancel At Period End",
             "type": "boolean"
@@ -99,7 +103,8 @@
           "current_period_end",
           "cancel_at_period_end",
           "usage",
-          "plans"
+          "plans",
+          "billing_enabled"
         ],
         "title": "BillingResponse",
         "type": "object"
@@ -297,6 +302,19 @@
           "lines"
         ],
         "title": "CategorySection",
+        "type": "object"
+      },
+      "CheckoutStart": {
+        "additionalProperties": false,
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/PlanId"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "title": "CheckoutStart",
         "type": "object"
       },
       "EntryKind": {
@@ -1103,6 +1121,20 @@
           "checks"
         ],
         "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "RedirectResponse": {
+        "description": "A provider-hosted page to send the browser to.",
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "RedirectResponse",
         "type": "object"
       },
       "RegisterRequest": {
@@ -2544,6 +2576,114 @@
           }
         ],
         "summary": "Get Billing",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/billing/checkout": {
+      "post": {
+        "description": "Start paying for a plan on the provider's hosted checkout page.",
+        "operationId": "start_checkout_api_v1_orgs__org_id__billing_checkout_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedirectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Checkout",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/billing/portal": {
+      "post": {
+        "description": "Open the provider's portal to change plan, cancel, update the card or see invoices.",
+        "operationId": "open_portal_api_v1_orgs__org_id__billing_portal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedirectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Open Portal",
         "tags": [
           "billing"
         ]

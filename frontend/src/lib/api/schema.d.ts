@@ -256,6 +256,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Checkout
+         * @description Start paying for a plan on the provider's hosted checkout page.
+         */
+        post: operations["start_checkout_api_v1_orgs__org_id__billing_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Portal
+         * @description Open the provider's portal to change plan, cancel, update the card or see invoices.
+         */
+        post: operations["open_portal_api_v1_orgs__org_id__billing_portal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/categories": {
         parameters: {
             query?: never;
@@ -524,6 +564,8 @@ export interface components {
         AccountType: "bank" | "cash" | "card" | "mobile_money" | "other";
         /** BillingResponse */
         BillingResponse: {
+            /** Billing Enabled */
+            billing_enabled: boolean;
             /** Cancel At Period End */
             cancel_at_period_end: boolean;
             /** Current Period End */
@@ -607,6 +649,10 @@ export interface components {
             lines: components["schemas"]["CategoryLine"][];
             /** Total */
             total: string;
+        };
+        /** CheckoutStart */
+        CheckoutStart: {
+            plan: components["schemas"]["PlanId"];
         };
         /**
          * EntryKind
@@ -940,6 +986,14 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "unavailable";
+        };
+        /**
+         * RedirectResponse
+         * @description A provider-hosted page to send the browser to.
+         */
+        RedirectResponse: {
+            /** Url */
+            url: string;
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -1631,6 +1685,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BillingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_checkout_api_v1_orgs__org_id__billing_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RedirectResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_portal_api_v1_orgs__org_id__billing_portal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RedirectResponse"];
                 };
             };
             /** @description Validation Error */

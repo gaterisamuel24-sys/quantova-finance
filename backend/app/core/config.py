@@ -50,17 +50,48 @@ class Settings(BaseSettings):
     # allowance applies below it (Free 3, Pro 20, Business 100).
     ai_daily_insights_per_org: int = Field(default=100, ge=1, le=1000)
 
+    # ── Billing (optional) ─────────────────────────────
+    # Without STRIPE_SECRET_KEY and both price ids, upgrading is switched off.
+    stripe_secret_key: SecretStr | None = None
+    stripe_webhook_secret: SecretStr | None = None
+    stripe_price_pro: str | None = Field(default=None, max_length=255)
+    stripe_price_business: str | None = Field(default=None, max_length=255)
+    # Where the browser returns after Stripe Checkout or the billing portal.
+    app_base_url: str = "http://localhost:5173"
+
     @property
     def ai_enabled(self) -> bool:
         return self.openai_api_key is not None
 
-    @field_validator("openai_api_key", mode="before")
+    @property
+    def billing_enabled(self) -> bool:
+        return (
+            self.stripe_secret_key is not None
+            and self.stripe_price_pro is not None
+            and self.stripe_price_business is not None
+        )
+
+    @field_validator(
+        "openai_api_key",
+        "stripe_secret_key",
+        "stripe_webhook_secret",
+        "stripe_price_pro",
+        "stripe_price_business",
+        mode="before",
+    )
     @classmethod
-    def blank_key_means_no_key(cls, value: object) -> object:
-        # "OPENAI_API_KEY=" in .env (an empty value) must switch AI off, not send "" to OpenAI.
+    def blank_means_not_set(cls, value: object) -> object:
+        # "OPENAI_API_KEY=" in .env (an empty value) must switch a feature off, not send "".
         if value is None or (isinstance(value, str) and not value.strip()):
             return None
         return value
+
+    @field_validator("app_base_url")
+    @classmethod
+    def base_url_without_trailing_slash(cls, value: str) -> str:
+        if not value.startswith(("http://", "https://")):
+            raise ValueError("APP_BASE_URL must start with http:// or https://")
+        return value.rstrip("/")
 
     @field_validator("jwt_secret_key")
     @classmethod

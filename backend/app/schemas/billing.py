@@ -32,6 +32,8 @@ class BillingResponse(BaseModel):
     cancel_at_period_end: bool
     usage: Usage
     plans: list[PlanResponse]
+    # False when the server has no payment provider configured: upgrading is unavailable.
+    billing_enabled: bool
 
 
 def plan_response(plan: Plan) -> PlanResponse:
@@ -45,7 +47,7 @@ def plan_response(plan: Plan) -> PlanResponse:
     )
 
 
-def billing_response(entitlements: Entitlements) -> BillingResponse:
+def billing_response(entitlements: Entitlements, *, billing_enabled: bool) -> BillingResponse:
     return BillingResponse(
         plan=plan_response(entitlements.plan),
         status=entitlements.status,
@@ -58,4 +60,5 @@ def billing_response(entitlements: Entitlements) -> BillingResponse:
             ai_insights_per_day=entitlements.ai_insights_per_day,
         ),
         plans=[plan_response(plan) for plan in PLANS.values()],
+        billing_enabled=billing_enabled,
     )
