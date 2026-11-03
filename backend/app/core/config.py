@@ -1,12 +1,14 @@
 """Application settings, loaded from environment variables (and .env in development)."""
 
+import os
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 MIN_JWT_SECRET_LENGTH = 32
+ASYNC_DRIVER_SCHEME = "postgresql+asyncpg://"
 
 
 class Settings(BaseSettings):
@@ -102,6 +104,26 @@ class Settings(BaseSettings):
         if not value.startswith(("http://", "https://")):
             raise ValueError("APP_BASE_URL must start with http:// or https://")
         return value.rstrip("/")
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def use_the_async_driver(cls, value: object) -> object:
+        """Hosting platforms give plain postgres:// URLs; the app needs the asyncpg driver."""
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else value
+        if isinstance(raw, str):
+            for scheme in ("postgres://", "postgresql://"):
+                if raw.startswith(scheme):
+                    return ASYNC_DRIVER_SCHEME + raw.removeprefix(scheme)
+        return value
+
+    @model_validator(mode="before")
+    @classmethod
+    def default_base_url_from_render(cls, data: Any) -> Any:
+        """On Render, use the service's public address unless APP_BASE_URL is set."""
+        render_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if isinstance(data, dict) and render_url and not data.get("app_base_url"):
+            return {**data, "app_base_url": render_url}
+        return data
 
     @field_validator("jwt_secret_key")
     @classmethod
