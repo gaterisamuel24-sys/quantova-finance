@@ -13,7 +13,16 @@ from redis.asyncio import Redis
 
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
+from app.core.errors import install_error_handlers
+from app.core.http_hardening import (
+    BodySizeLimitMiddleware,
+    RequestIdMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.db.session import create_engine, create_sessionmaker
+
+# The largest legitimate request is a 5 MB CSV import; allow some room for the form encoding.
+MAX_REQUEST_BYTES = 6 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -51,6 +60,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
 
+    # Middleware runs outermost-first in the reverse order of these calls: the request id is
+    # assigned first, then the size check, then CORS, and security headers wrap every
+    # response, including CORS preflights and size rejections.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -58,6 +70,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_REQUEST_BYTES)
+    app.add_middleware(
+        SecurityHeadersMiddleware, hsts=settings.environment in ("staging", "production")
+    )
+    app.add_middleware(RequestIdMiddleware)
+    install_error_handlers(app)
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     return app
