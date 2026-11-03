@@ -1,5 +1,8 @@
 import { Logo } from "../brand/Logo";
 
+// Calculated once when the app loads, so rendering stays pure.
+const CURRENT_YEAR = new Date().getFullYear();
+
 export function PublicFooter() {
   return (
     <footer className="border-t">
@@ -7,7 +10,7 @@ export function PublicFooter() {
         <div className="grid gap-3">
           <Logo />
           <p className="text-muted-foreground">
-            © {new Date().getFullYear()} Quantova Finance. All rights reserved.
+            © {CURRENT_YEAR} Quantova Finance. All rights reserved.
           </p>
         </div>
         <p className="text-muted-foreground md:text-right">
