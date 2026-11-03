@@ -181,6 +181,7 @@ type Options = {
   analytics?: FakeAnalytics;
 };
 
+const REPORTS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/reports\/([a-z-]+\.(?:csv|pdf))$/;
 const ANALYTICS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/analytics\/(summary|cash-flow|profit-loss)$/;
 const LEDGER_PATH = /^\/api\/v1\/orgs\/([^/]+)\/(accounts|categories|transactions)(?:\/(.+))?$/;
 
@@ -273,6 +274,21 @@ export function createFakeBackend({
     const url = new URL(request.url);
     const path = url.pathname;
     const authorized = current !== null && request.headers.has("Authorization");
+
+    const reportMatch = REPORTS_PATH.exec(path);
+    if (reportMatch) {
+      if (!authorized) return json(401, { detail: "Not authenticated" });
+      const organization = orgs.find((candidate) => candidate.id === reportMatch[1]);
+      if (!organization) return json(404, { detail: "Organization not found." });
+      const [name, extension] = reportMatch[2].split(".");
+      return new Response(extension === "pdf" ? "%PDF-1.4 fake" : "\ufeffdate,type,amount\r\n", {
+        status: 200,
+        headers: {
+          "Content-Type": extension === "pdf" ? "application/pdf" : "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${organization.slug}-${name}.${extension}"`,
+        },
+      });
+    }
 
     const analyticsMatch = ANALYTICS_PATH.exec(path);
     if (analyticsMatch) {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { Alert } from "../../components/ui/Alert";
@@ -7,6 +8,7 @@ import { cn } from "../../lib/cn";
 import { formatMoney } from "../../lib/money";
 import { useCurrentOrganization } from "../organizations/current-organization";
 import { useProfitLoss, type CategorySection } from "./api";
+import { DownloadButton } from "./DownloadButton";
 import { PeriodSelect } from "./PeriodSelect";
 import { formatRange, parsePeriod, periodLabel } from "./periods";
 
@@ -17,6 +19,8 @@ export function ProfitLossPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const period = parsePeriod(searchParams.get("period"), "this_month");
   const report = useProfitLoss(organization.id, period);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const reportPath = `/api/v1/orgs/${encodeURIComponent(organization.id)}/reports`;
 
   return (
     <>
@@ -31,8 +35,28 @@ export function ProfitLossPage() {
               : "Income and expenses by category."}
           </p>
         </div>
-        <PeriodSelect value={period} onChange={(value) => setSearchParams({ period: value })} />
+        <div className="flex flex-wrap gap-2">
+          <PeriodSelect value={period} onChange={(value) => setSearchParams({ period: value })} />
+          <DownloadButton
+            label="CSV"
+            description="Download profit & loss as CSV"
+            path={`${reportPath}/profit-loss.csv`}
+            query={{ period }}
+            fallbackName="profit-loss.csv"
+            onError={setDownloadError}
+          />
+          <DownloadButton
+            label="PDF"
+            description="Download profit & loss as PDF"
+            path={`${reportPath}/profit-loss.pdf`}
+            query={{ period }}
+            fallbackName="profit-loss.pdf"
+            onError={setDownloadError}
+          />
+        </div>
       </div>
+
+      {downloadError && <Alert tone="error" title={downloadError} className="mt-4" />}
 
       {report.isError ? (
         <Alert tone="error" title={report.error.message} className="mt-6" />

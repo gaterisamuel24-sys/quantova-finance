@@ -17,6 +17,7 @@ dependencies = [
     "pyjwt>=2.15.1",
     "python-multipart>=0.0.33",
     "redis>=8.1.0",
+    "reportlab>=5.1.0",
     "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -79,3 +80,8 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.17.3",
 ]
+
+[[tool.mypy.overrides]]
+# ReportLab ships without type information; our use of it is covered by tests.
+module = ["reportlab", "reportlab.*"]
+ignore_missing_imports = true

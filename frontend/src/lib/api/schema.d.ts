@@ -289,6 +289,77 @@ export interface paths {
         patch: operations["change_member_role_api_v1_orgs__org_id__members__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/reports/cash-flow.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Cash Flow Csv */
+        get: operations["export_cash_flow_csv_api_v1_orgs__org_id__reports_cash_flow_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/reports/profit-loss.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Profit Loss Csv */
+        get: operations["export_profit_loss_csv_api_v1_orgs__org_id__reports_profit_loss_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/reports/profit-loss.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Profit Loss Pdf */
+        get: operations["export_profit_loss_pdf_api_v1_orgs__org_id__reports_profit_loss_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/reports/transactions.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Transactions
+         * @description Every transaction in the range, oldest first. Opens directly in Excel.
+         */
+        get: operations["export_transactions_api_v1_orgs__org_id__reports_transactions_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/transactions": {
         parameters: {
             query?: never;
@@ -1494,6 +1565,161 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_cash_flow_csv_api_v1_orgs__org_id__reports_cash_flow_csv_get: {
+        parameters: {
+            query?: {
+                granularity?: components["schemas"]["Granularity"];
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_profit_loss_csv_api_v1_orgs__org_id__reports_profit_loss_csv_get: {
+        parameters: {
+            query?: {
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_profit_loss_pdf_api_v1_orgs__org_id__reports_profit_loss_pdf_get: {
+        parameters: {
+            query?: {
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A PDF file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_transactions_api_v1_orgs__org_id__reports_transactions_csv_get: {
+        parameters: {
+            query?: {
+                /** @description Only income or only expenses */
+                kind?: components["schemas"]["EntryKind"] | null;
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
                 };
             };
             /** @description Validation Error */

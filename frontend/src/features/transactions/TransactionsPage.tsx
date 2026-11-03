@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
+import { ArrowLeftRight, Download, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
 
@@ -30,6 +30,7 @@ import {
   hasActiveFilters,
   type TransactionFilters,
 } from "./filters";
+import { ExportDialog } from "./ExportDialog";
 import { ImportDialog } from "./ImportDialog";
 import { TransactionFormDialog } from "./TransactionFormDialog";
 
@@ -38,6 +39,7 @@ type OpenDialog =
   | { type: "edit"; transaction: Transaction }
   | { type: "delete"; transaction: Transaction }
   | { type: "import" }
+  | { type: "export" }
   | null;
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
@@ -84,18 +86,24 @@ export function TransactionsPage() {
             Income and expenses for {organization.name}, in {organization.base_currency}.
           </p>
         </div>
-        {canEdit && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => setDialog({ type: "import" })}>
-              <Upload className="size-4" aria-hidden="true" />
-              Import CSV
-            </Button>
-            <Button disabled={!ready} onClick={() => setDialog({ type: "add" })}>
-              <Plus className="size-4" aria-hidden="true" />
-              Add transaction
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setDialog({ type: "export" })}>
+            <Download className="size-4" aria-hidden="true" />
+            Export CSV
+          </Button>
+          {canEdit && (
+            <>
+              <Button variant="secondary" onClick={() => setDialog({ type: "import" })}>
+                <Upload className="size-4" aria-hidden="true" />
+                Import CSV
+              </Button>
+              <Button disabled={!ready} onClick={() => setDialog({ type: "add" })}>
+                <Plus className="size-4" aria-hidden="true" />
+                Add transaction
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <FilterBar
@@ -166,6 +174,7 @@ export function TransactionsPage() {
         <DeleteDialog orgId={orgId} transaction={dialog.transaction} onClose={closeDialog} />
       )}
       {dialog?.type === "import" && <ImportDialog orgId={orgId} onClose={closeDialog} />}
+      {dialog?.type === "export" && <ExportDialog orgId={orgId} onClose={closeDialog} />}
     </>
   );
 }

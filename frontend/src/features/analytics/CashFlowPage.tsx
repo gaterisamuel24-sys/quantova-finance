@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 
 import {
@@ -18,6 +19,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { subtractAmounts } from "../../lib/money";
 import { useCurrentOrganization } from "../organizations/current-organization";
 import { useCashFlow } from "./api";
+import { DownloadButton } from "./DownloadButton";
 import { GranularitySelect, PeriodSelect } from "./PeriodSelect";
 import { formatRange, parseGranularity, parsePeriod } from "./periods";
 import { StatTile, toFlowPoints } from "./StatTile";
@@ -30,6 +32,7 @@ export function CashFlowPage() {
   const granularity = parseGranularity(searchParams.get("granularity"), "month");
   const cashFlow = useCashFlow(organization.id, period, granularity);
   const points = cashFlow.data ? toFlowPoints(cashFlow.data) : [];
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   function update(name: "period" | "granularity", value: string) {
     const next = new URLSearchParams(searchParams);
@@ -56,8 +59,18 @@ export function CashFlowPage() {
             value={granularity}
             onChange={(value) => update("granularity", value)}
           />
+          <DownloadButton
+            label="CSV"
+            description="Download cash flow as CSV"
+            path={`/api/v1/orgs/${encodeURIComponent(organization.id)}/reports/cash-flow.csv`}
+            query={{ period, granularity }}
+            fallbackName="cash-flow.csv"
+            onError={setDownloadError}
+          />
         </div>
       </div>
+
+      {downloadError && <Alert tone="error" title={downloadError} className="mt-4" />}
 
       {cashFlow.isError ? (
         <Alert tone="error" title={cashFlow.error.message} className="mt-6" />
