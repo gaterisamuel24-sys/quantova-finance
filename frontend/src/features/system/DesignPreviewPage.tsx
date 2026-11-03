@@ -1,10 +1,10 @@
 import { ArrowDownRight, ArrowUpRight, Plus } from "lucide-react";
 
-import { Logo } from "../components/brand/Logo";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { Alert } from "../components/ui/Alert";
-import { Badge } from "../components/ui/Badge";
-import { Button } from "../components/ui/Button";
+import { Logo } from "../../components/brand/Logo";
+import { ThemeToggle } from "../../components/ThemeToggle";
+import { Alert } from "../../components/ui/Alert";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 import {
   Card,
   CardContent,
@@ -12,11 +12,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../components/ui/Card";
-import { Field } from "../components/ui/Field";
-import { Input } from "../components/ui/Input";
-import { ApiStatus } from "../features/system/ApiStatus";
-import { cn } from "../lib/cn";
+} from "../../components/ui/Card";
+import { Field } from "../../components/ui/Field";
+import { Input } from "../../components/ui/Input";
+import { ApiStatus } from "./ApiStatus";
+import { cn } from "../../lib/cn";
 
 // Illustrative figures for the design preview only.
 const SAMPLE_METRICS = [
@@ -34,7 +34,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function App() {
+export function DesignPreviewPage() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b bg-surface/80 backdrop-blur">
