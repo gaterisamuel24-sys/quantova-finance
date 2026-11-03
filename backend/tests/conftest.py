@@ -70,6 +70,11 @@ def settings_factory() -> SettingsFactory:
             "enforce_member_limits": False,
             "rate_limit_enabled": False,
         }
+        if overrides.get("environment") == "production":
+            # Production settings must pass the safety checks in app/core/config.py.
+            values.update(
+                {"rate_limit_enabled": True, "enforce_member_limits": True, "cors_origins": []}
+            )
         values.update(overrides)
         return Settings(_env_file=None, **values)
 

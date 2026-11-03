@@ -29,7 +29,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
     FRONTEND_DIST_DIR=/app/frontend_dist \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    LOG_FORMAT=json \
+    CORS_ORIGINS=[]
 WORKDIR /app
 COPY --from=backend-build /app /app
 COPY --from=frontend /build/dist /app/frontend_dist

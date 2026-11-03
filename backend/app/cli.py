@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 
 from app.core.config import get_settings
+from app.core.logging import configure_logging
 from app.db.session import create_engine, create_sessionmaker
 from app.services.maintenance import purge_expired_refresh_tokens
 
@@ -43,8 +44,10 @@ async def run(command: str) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     args = parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    # In the Docker image (LOG_FORMAT=json) this switches to the same JSON lines as the API.
+    configure_logging(get_settings())
     return asyncio.run(run(args.command))
 
 
