@@ -19,7 +19,8 @@ import { formatMoney } from "../../lib/money";
 import { useCashFlow, useProfitLoss, useSummary, type CategorySection } from "../analytics/api";
 import { PeriodSelect } from "../analytics/PeriodSelect";
 import { formatRange, parsePeriod, type Period } from "../analytics/periods";
-import { StatTile, toFlowPoints } from "../analytics/StatTile";
+import { toFlowPoints } from "../analytics/flow-points";
+import { StatTile } from "../analytics/StatTile";
 import { useAuth } from "../auth/auth-context";
 import { useCurrentOrganization } from "../organizations/current-organization";
 

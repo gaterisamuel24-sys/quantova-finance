@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  CreditCard,
   FileText,
   LayoutDashboard,
   Settings,
@@ -25,8 +26,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Transactions", Icon: ArrowLeftRight, path: "transactions" },
   { label: "Cash flow", Icon: Wallet, path: "cash-flow" },
   { label: "Profit & loss", Icon: FileText, path: "profit-loss" },
-  { label: "AI insights", Icon: Sparkles },
+  { label: "AI insights", Icon: Sparkles, path: "insights" },
   { label: "Members", Icon: Users },
+  { label: "Billing", Icon: CreditCard, path: "billing" },
   { label: "Settings", Icon: Settings },
 ];
 

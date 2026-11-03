@@ -3,9 +3,6 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { cn } from "../../lib/cn";
 import { formatMoney } from "../../lib/money";
-import type { CashFlow } from "./api";
-import { axisLabel, bucketLabel } from "./periods";
-import type { FlowPoint } from "../../components/charts/CashFlowCharts";
 
 type Change = {
   /** Percentage change from the API ("12.5", "-3.0"), or null when there is no baseline. */
@@ -58,17 +55,4 @@ export function StatTile({ label, amount, currency, change, footnote }: StatTile
       {footnote && <p className="mt-3 text-xs text-muted-foreground">{footnote}</p>}
     </Card>
   );
-}
-
-/** Turn a cash-flow response into chart points. */
-export function toFlowPoints(cashFlow: CashFlow): FlowPoint[] {
-  return cashFlow.points.map((point) => ({
-    key: point.start,
-    label: bucketLabel(point.start, cashFlow.granularity),
-    axisLabel: axisLabel(point.start, cashFlow.granularity),
-    income: point.income,
-    expenses: point.expenses,
-    net: point.net,
-    closingBalance: point.closing_balance,
-  }));
 }

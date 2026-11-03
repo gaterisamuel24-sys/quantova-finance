@@ -4,10 +4,12 @@ import { AppIndexRedirect } from "../features/app-shell/AppIndexRedirect";
 import { CashFlowPage } from "../features/analytics/CashFlowPage";
 import { ProfitLossPage } from "../features/analytics/ProfitLossPage";
 import { AppShell } from "../features/app-shell/AppShell";
+import { BillingPage } from "../features/billing/BillingPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { GuestOnly, RequireAuth } from "../features/auth/route-guards";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { InsightsPage } from "../features/insights/InsightsPage";
 import { LandingPage } from "../features/marketing/LandingPage";
 import { CreateOrganizationPage } from "../features/organizations/CreateOrganizationPage";
 import { DesignPreviewPage } from "../features/system/DesignPreviewPage";
@@ -51,6 +53,8 @@ export const routes: RouteObject[] = [
                 element: <ProfitLossPage />,
                 handle: { title: "Profit & loss" },
               },
+              { path: "insights", element: <InsightsPage />, handle: { title: "AI insights" } },
+              { path: "billing", element: <BillingPage />, handle: { title: "Billing" } },
             ],
           },
         ],

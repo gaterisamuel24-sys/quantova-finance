@@ -22,7 +22,8 @@ import { useCashFlow } from "./api";
 import { DownloadButton } from "./DownloadButton";
 import { GranularitySelect, PeriodSelect } from "./PeriodSelect";
 import { formatRange, parseGranularity, parsePeriod } from "./periods";
-import { StatTile, toFlowPoints } from "./StatTile";
+import { toFlowPoints } from "./flow-points";
+import { StatTile } from "./StatTile";
 
 export function CashFlowPage() {
   const organization = useCurrentOrganization();

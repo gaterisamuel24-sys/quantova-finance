@@ -21,6 +21,126 @@ type Summary = components["schemas"]["SummaryResponse"];
 type CashFlow = components["schemas"]["CashFlowResponse"];
 type ProfitLoss = components["schemas"]["ProfitLossResponse"];
 
+type Insight = components["schemas"]["InsightResponse"];
+type Billing = components["schemas"]["BillingResponse"];
+type PlanResponse = components["schemas"]["PlanResponse"];
+
+const PLANS: PlanResponse[] = [
+  {
+    id: "free",
+    name: "Free",
+    description: "For trying Quantova on your own.",
+    monthly_price_usd: "0",
+    max_members: 1,
+    ai_insights_per_day: 3,
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    description: "For small teams.",
+    monthly_price_usd: "19",
+    max_members: 5,
+    ai_insights_per_day: 20,
+  },
+  {
+    id: "business",
+    name: "Business",
+    description: "For growing businesses.",
+    monthly_price_usd: "49",
+    max_members: 25,
+    ai_insights_per_day: 100,
+  },
+];
+
+/** A billing response, Free by default. */
+export function makeBilling(
+  fields: Partial<Billing> & { planId?: PlanResponse["id"] } = {},
+): Billing {
+  const { planId = "free", ...rest } = fields;
+  const plan = PLANS.find((candidate) => candidate.id === planId) ?? PLANS[0];
+  return {
+    plan,
+    status: null,
+    current_period_end: null,
+    cancel_at_period_end: false,
+    usage: {
+      members: 1,
+      max_members: plan.max_members,
+      ai_insights_today: 0,
+      ai_insights_per_day: plan.ai_insights_per_day,
+    },
+    plans: PLANS,
+    billing_enabled: true,
+    ...rest,
+  };
+}
+
+/** How the fake insights API behaves. */
+export type FakeInsights = {
+  aiEnabled?: boolean;
+  dailyLimit?: number;
+  /** Insights that already exist, newest first. */
+  existing?: Insight[];
+  /** Make generation fail with this HTTP status and message. */
+  failWith?: { status: number; detail: string };
+};
+
+export function makeInsight(currency = "USD", fields: Partial<Insight> = {}): Insight {
+  return {
+    id: crypto.randomUUID(),
+    created_at: "2026-11-03T09:30:00Z",
+    period_start: "2026-11-01",
+    period_end: "2026-11-30",
+    period_preset: "this_month",
+    currency,
+    headline: "Income rose 25.1% to 1,250.50 this month.",
+    observations: [
+      {
+        title: "Income grew",
+        detail: "Income was 1,250.50, up 25.1% on last month.",
+        kind: "positive",
+        fact_ids: ["income", "income_change_pct"],
+      },
+      {
+        title: "Cash is running down",
+        detail: "At the recent average you have about 6.0 months of cash left.",
+        kind: "risk",
+        fact_ids: ["cash_runway_months_estimate"],
+      },
+    ],
+    suggestions: [
+      {
+        title: "Review rent",
+        detail: "Rent is your largest expense.",
+        fact_ids: ["expense_category_1"],
+      },
+    ],
+    facts: [
+      { id: "income", label: "Income this period", value: "1250.5000", unit: "money" },
+      {
+        id: "income_change_pct",
+        label: "Change in income vs previous period",
+        value: "25.1",
+        unit: "percent",
+      },
+      {
+        id: "cash_runway_months_estimate",
+        label: "Estimated months of cash left",
+        value: "6.0",
+        unit: "months",
+      },
+      {
+        id: "expense_category_1",
+        label: "Expense category: Rent & utilities",
+        value: "300.0000",
+        unit: "money",
+      },
+    ],
+    model: "fake-model",
+    ...fields,
+  };
+}
+
 /** Canned analytics answers. Anything not given is an all-zero report. */
 export type FakeAnalytics = { summary?: Summary; cashFlow?: CashFlow; profitLoss?: ProfitLoss };
 
@@ -179,8 +299,12 @@ type Options = {
   /** What POST .../transactions/import answers for a dry run. */
   importReport?: ImportReport;
   analytics?: FakeAnalytics;
+  insights?: FakeInsights;
+  billing?: Billing;
 };
 
+const BILLING_PATH = /^\/api\/v1\/orgs\/([^/]+)\/billing(?:\/(checkout|portal))?$/;
+const INSIGHTS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/insights$/;
 const REPORTS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/reports\/([a-z-]+\.(?:csv|pdf))$/;
 const ANALYTICS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/analytics\/(summary|cash-flow|profit-loss)$/;
 const LEDGER_PATH = /^\/api\/v1\/orgs\/([^/]+)\/(accounts|categories|transactions)(?:\/(.+))?$/;
@@ -192,11 +316,14 @@ export function createFakeBackend({
   ledgers = {},
   importReport,
   analytics = {},
+  insights = {},
+  billing,
 }: Options = {}): FetchHandler {
   const amina = makeUser("amina@example.com", "Amina Otieno");
   const accounts = new Map([[amina.email, { password: PASSWORD, user: amina }]]);
   const orgs = [...organizations];
   let current: FakeUser | null = signedIn ? amina : null;
+  const insightItems: Record<string, Insight[]> = {};
 
   function ledgerFor(orgId: string): FakeLedger | undefined {
     const organization = orgs.find((candidate) => candidate.id === orgId);
@@ -274,6 +401,56 @@ export function createFakeBackend({
     const url = new URL(request.url);
     const path = url.pathname;
     const authorized = current !== null && request.headers.has("Authorization");
+
+    const billingMatch = BILLING_PATH.exec(path);
+    if (billingMatch) {
+      if (!authorized) return json(401, { detail: "Not authenticated" });
+      const organization = orgs.find((candidate) => candidate.id === billingMatch[1]);
+      if (!organization) return json(404, { detail: "Organization not found." });
+      const state = billing ?? makeBilling();
+      const action = billingMatch[2];
+      if (!action) return json(200, state);
+      if (organization.my_role !== "owner") {
+        return json(403, { detail: "This action requires the owner role or higher." });
+      }
+      if (action === "portal") {
+        return state.status === null
+          ? json(409, { detail: "There is no billing account yet. Choose a plan first." })
+          : json(200, { url: "https://billing.stripe.com/p/session/test_portal" });
+      }
+      const body = (await request.json()) as { plan: string };
+      return json(200, { url: `https://checkout.stripe.com/c/pay/cs_test_${body.plan}` });
+    }
+
+    const insightsMatch = INSIGHTS_PATH.exec(path);
+    if (insightsMatch) {
+      if (!authorized) return json(401, { detail: "Not authenticated" });
+      const organization = orgs.find((candidate) => candidate.id === insightsMatch[1]);
+      if (!organization) return json(404, { detail: "Organization not found." });
+      const { aiEnabled = true, dailyLimit = 20, failWith } = insights;
+      const items = (insightItems[organization.id] ??= [...(insights.existing ?? [])]);
+      if (request.method === "POST") {
+        if (organization.my_role === "viewer") {
+          return json(403, { detail: "This action requires the analyst role or higher." });
+        }
+        if (!aiEnabled)
+          return json(503, { detail: "AI insights are not configured on this server." });
+        if (failWith) return json(failWith.status, { detail: failWith.detail });
+        const body = (await request.json()) as { period?: string };
+        const created = makeInsight(organization.base_currency, {
+          period_preset: (body.period ?? "this_month") as Insight["period_preset"],
+          created_at: new Date().toISOString(),
+        });
+        items.unshift(created);
+        return json(201, created);
+      }
+      return json(200, {
+        items,
+        ai_enabled: aiEnabled,
+        daily_limit: dailyLimit,
+        remaining_today: Math.max(0, dailyLimit - items.length),
+      });
+    }
 
     const reportMatch = REPORTS_PATH.exec(path);
     if (reportMatch) {

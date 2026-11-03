@@ -24,9 +24,11 @@ export function Dialog({ title, description, onClose, children, className }: Dia
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
-  // Keep the latest onClose without re-running the effect (which would steal focus again).
+  // Keep the latest onClose without re-running the focus effect (which would steal focus).
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
