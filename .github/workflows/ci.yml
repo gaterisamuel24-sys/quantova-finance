@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Weekly, so vulnerabilities disclosed after a change was merged still come to light.
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC
 
 # Least privilege: CI only needs to read the code.
 permissions:
@@ -113,6 +116,31 @@ jobs:
         run: |
           npm run api:generate
           git diff --exit-code -- src/lib/api/schema.d.ts
+
+  dependencies:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v8.1.0
+
+      # Every Python package in uv.lock (app and dev tools), pinned exactly as installed,
+      # checked against the Python Packaging Advisory Database and OSV.
+      - name: Python packages (pip-audit)
+        working-directory: backend
+        run: |
+          uv export --locked --all-groups --no-hashes --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
+          uvx --from pip-audit==2.9.0 pip-audit --requirement "$RUNNER_TEMP/requirements.txt" --no-deps --disable-pip --progress-spinner off
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "26"
+
+      # Packages that ship to users' browsers. High and critical advisories fail the build.
+      - name: npm packages (npm audit)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
 
   secrets:
     name: Secret scan (full history)
