@@ -1,6 +1,8 @@
 import type { RouteObject } from "react-router";
 
 import { AppIndexRedirect } from "../features/app-shell/AppIndexRedirect";
+import { CashFlowPage } from "../features/analytics/CashFlowPage";
+import { ProfitLossPage } from "../features/analytics/ProfitLossPage";
 import { AppShell } from "../features/app-shell/AppShell";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
@@ -42,6 +44,12 @@ export const routes: RouteObject[] = [
                 path: "transactions",
                 element: <TransactionsPage />,
                 handle: { title: "Transactions" },
+              },
+              { path: "cash-flow", element: <CashFlowPage />, handle: { title: "Cash flow" } },
+              {
+                path: "profit-loss",
+                element: <ProfitLossPage />,
+                handle: { title: "Profit & loss" },
               },
             ],
           },

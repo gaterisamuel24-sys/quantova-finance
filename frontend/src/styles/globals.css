@@ -94,3 +94,17 @@
     scroll-behavior: smooth;
   }
 }
+
+/* Chart series colours: a blue/orange pair checked for colour-blind users, light and dark. */
+:root {
+  --chart-income: #2a78d6;
+  --chart-expense: #eb6834;
+}
+.dark {
+  --chart-income: #3987e5;
+  --chart-expense: #d95926;
+}
+@theme inline {
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+}

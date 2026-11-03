@@ -23,8 +23,8 @@ type NavItem = { label: string; Icon: LucideIcon; path?: string };
 const NAV_ITEMS: NavItem[] = [
   { label: "Overview", Icon: LayoutDashboard, path: "" },
   { label: "Transactions", Icon: ArrowLeftRight, path: "transactions" },
-  { label: "Cash flow", Icon: Wallet },
-  { label: "Reports", Icon: FileText },
+  { label: "Cash flow", Icon: Wallet, path: "cash-flow" },
+  { label: "Profit & loss", Icon: FileText, path: "profit-loss" },
   { label: "AI insights", Icon: Sparkles },
   { label: "Members", Icon: Users },
   { label: "Settings", Icon: Settings },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatMoney, parseAmountInput, trimAmount } from "./money";
+import { formatMoney, parseAmountInput, subtractAmounts, trimAmount } from "./money";
 
 describe("parseAmountInput", () => {
   it.each([
@@ -52,5 +52,21 @@ describe("formatMoney", () => {
   it("can always show the sign", () => {
     expect(formatMoney("10", "USD", { signDisplay: "always" })).toContain("+");
     expect(formatMoney("-10", "USD", { signDisplay: "always" })).toContain("-");
+  });
+});
+
+describe("subtractAmounts", () => {
+  it.each([
+    ["0.3", "0.1", "0.2000"], // 0.3 - 0.1 is 0.19999999999999998 in floating point
+    ["100.0000", "250.5", "-150.5000"],
+    ["-20", "-20", "0.0000"],
+    ["999999999999999.9999", "0.0001", "999999999999999.9998"],
+  ])("%s − %s = %s", (a, b, expected) => {
+    expect(subtractAmounts(a, b)).toBe(expected);
+  });
+
+  it("refuses values that are not exact decimals", () => {
+    expect(() => subtractAmounts("1e3", "1")).toThrow();
+    expect(() => subtractAmounts("1.23456", "1")).toThrow();
   });
 });

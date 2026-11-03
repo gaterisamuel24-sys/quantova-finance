@@ -58,3 +58,28 @@ export function formatMoney(
     signDisplay,
   }).format(amount as NumericString);
 }
+
+const SCALE = 4; // decimal places, as stored by the database
+
+/** An exact decimal string as an integer number of 1/10,000 units. */
+function toUnits(amount: string): bigint {
+  const text = amount.trim();
+  if (!/^[-+]?\d+(\.\d+)?$/.test(text)) throw new Error(`Not a decimal amount: ${amount}`);
+  const negative = text.startsWith("-");
+  const [whole, fraction = ""] = text.replace(/^[-+]/, "").split(".");
+  if (fraction.length > SCALE) throw new Error(`More than ${SCALE} decimal places: ${amount}`);
+  const units = BigInt(whole) * 10n ** BigInt(SCALE) + BigInt(fraction.padEnd(SCALE, "0"));
+  return negative ? -units : units;
+}
+
+function fromUnits(units: bigint): string {
+  const negative = units < 0n;
+  const digits = (negative ? -units : units).toString().padStart(SCALE + 1, "0");
+  const text = `${digits.slice(0, -SCALE)}.${digits.slice(-SCALE)}`;
+  return negative ? `-${text}` : text;
+}
+
+/** a − b, exactly, using whole-number arithmetic on 1/10,000 units (never floating point). */
+export function subtractAmounts(a: string, b: string): string {
+  return fromUnits(toUnits(a) - toUnits(b));
+}

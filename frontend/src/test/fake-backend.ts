@@ -17,6 +17,64 @@ type Account = components["schemas"]["AccountResponse"];
 type Category = components["schemas"]["CategoryResponse"];
 type Transaction = components["schemas"]["TransactionResponse"];
 type ImportReport = components["schemas"]["ImportReport"];
+type Summary = components["schemas"]["SummaryResponse"];
+type CashFlow = components["schemas"]["CashFlowResponse"];
+type ProfitLoss = components["schemas"]["ProfitLossResponse"];
+
+/** Canned analytics answers. Anything not given is an all-zero report. */
+export type FakeAnalytics = { summary?: Summary; cashFlow?: CashFlow; profitLoss?: ProfitLoss };
+
+const OCTOBER = { start: "2026-10-01", end: "2026-10-31", days: 31, preset: null };
+
+export function makeSummary(currency = "USD", fields: Partial<Summary> = {}): Summary {
+  const zero = { income: "0.0000", expenses: "0.0000", net: "0.0000", transaction_count: 0 };
+  return {
+    currency,
+    period: { ...OCTOBER, preset: "this_month" },
+    previous_period: { start: "2026-09-01", end: "2026-09-30", days: 30, preset: null },
+    current: zero,
+    previous: zero,
+    change: { income_pct: null, expenses_pct: null, net_pct: null },
+    cash_balance: "0.0000",
+    cash_balance_as_of: "2026-10-31",
+    other_currency_transaction_count: 0,
+    ...fields,
+  };
+}
+
+export function makeCashFlow(currency = "USD", fields: Partial<CashFlow> = {}): CashFlow {
+  return {
+    currency,
+    period: OCTOBER,
+    granularity: "month",
+    opening_balance: "0.0000",
+    closing_balance: "0.0000",
+    points: [
+      {
+        start: "2026-10-01",
+        end: "2026-10-31",
+        income: "0.0000",
+        expenses: "0.0000",
+        net: "0.0000",
+        closing_balance: "0.0000",
+      },
+    ],
+    ...fields,
+  };
+}
+
+export function makeProfitLoss(currency = "USD", fields: Partial<ProfitLoss> = {}): ProfitLoss {
+  const empty = { total: "0.0000", lines: [] };
+  return {
+    currency,
+    period: OCTOBER,
+    income: empty,
+    expenses: empty,
+    net_profit: "0.0000",
+    margin_pct: null,
+    ...fields,
+  };
+}
 
 export type FakeOrganization = {
   id: string;
@@ -120,8 +178,10 @@ type Options = {
   ledgers?: Record<string, FakeLedger>;
   /** What POST .../transactions/import answers for a dry run. */
   importReport?: ImportReport;
+  analytics?: FakeAnalytics;
 };
 
+const ANALYTICS_PATH = /^\/api\/v1\/orgs\/([^/]+)\/analytics\/(summary|cash-flow|profit-loss)$/;
 const LEDGER_PATH = /^\/api\/v1\/orgs\/([^/]+)\/(accounts|categories|transactions)(?:\/(.+))?$/;
 
 /** A simulated API that follows the real backend's rules for auth, organizations and the ledger. */
@@ -130,6 +190,7 @@ export function createFakeBackend({
   organizations = [],
   ledgers = {},
   importReport,
+  analytics = {},
 }: Options = {}): FetchHandler {
   const amina = makeUser("amina@example.com", "Amina Otieno");
   const accounts = new Map([[amina.email, { password: PASSWORD, user: amina }]]);
@@ -212,6 +273,21 @@ export function createFakeBackend({
     const url = new URL(request.url);
     const path = url.pathname;
     const authorized = current !== null && request.headers.has("Authorization");
+
+    const analyticsMatch = ANALYTICS_PATH.exec(path);
+    if (analyticsMatch) {
+      if (!authorized) return json(401, { detail: "Not authenticated" });
+      const organization = orgs.find((candidate) => candidate.id === analyticsMatch[1]);
+      if (!organization) return json(404, { detail: "Organization not found." });
+      const currency = organization.base_currency;
+      if (analyticsMatch[2] === "summary") {
+        return json(200, analytics.summary ?? makeSummary(currency));
+      }
+      if (analyticsMatch[2] === "cash-flow") {
+        return json(200, analytics.cashFlow ?? makeCashFlow(currency));
+      }
+      return json(200, analytics.profitLoss ?? makeProfitLoss(currency));
+    }
 
     const ledgerMatch = LEDGER_PATH.exec(path);
     if (ledgerMatch) {
