@@ -30,3 +30,20 @@ _ORG_ROLE_RANK = {
 def org_role_at_least(role: OrgRole, minimum: OrgRole) -> bool:
     """True if `role` grants at least the permissions of `minimum`."""
     return _ORG_ROLE_RANK[role] >= _ORG_ROLE_RANK[minimum]
+
+
+class AccountType(StrEnum):
+    """Where money is held."""
+
+    BANK = "bank"
+    CASH = "cash"
+    CARD = "card"
+    MOBILE_MONEY = "mobile_money"
+    OTHER = "other"
+
+
+class EntryKind(StrEnum):
+    """Direction of money. Shared by categories and transactions so the two must agree."""
+
+    INCOME = "income"
+    EXPENSE = "expense"

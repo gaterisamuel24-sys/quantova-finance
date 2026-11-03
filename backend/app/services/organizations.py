@@ -13,6 +13,7 @@ from app.models import Membership, Organization, OrgRole, User
 from app.repositories import organizations as org_repo
 from app.repositories import users as user_repo
 from app.services.audit import ClientInfo, record_audit_event
+from app.services.defaults import add_default_ledger
 
 MAX_SLUG_BASE_LENGTH = 80
 ROLES_ADMINS_MAY_MANAGE = frozenset({OrgRole.ANALYST, OrgRole.VIEWER})
@@ -108,6 +109,7 @@ async def create_organization(
     session.add(organization)
     await session.flush()
     session.add(Membership(user_id=user.id, organization_id=organization.id, role=OrgRole.OWNER))
+    add_default_ledger(session, organization)
     record_audit_event(
         session,
         action="organization.created",
