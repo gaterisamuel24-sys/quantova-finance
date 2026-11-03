@@ -1,0 +1,19 @@
+# Keep the build context small, and keep secrets out of images.
+.git
+.github
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/node_modules
+**/dist
+**/coverage
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+infra
+scripts
+*.md
