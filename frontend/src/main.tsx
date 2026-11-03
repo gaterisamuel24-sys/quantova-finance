@@ -8,13 +8,16 @@ import "./styles/globals.css";
 
 import { routes } from "./app/routes";
 import { ThemeProvider } from "./app/theme/ThemeProvider";
+import { AuthProvider } from "./features/auth/AuthProvider";
 
 const router = createBrowserRouter(routes);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 );

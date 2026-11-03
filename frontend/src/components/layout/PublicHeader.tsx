@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { useAuth } from "../../features/auth/auth-context";
 import { cn } from "../../lib/cn";
 import { Logo } from "../brand/Logo";
 import { ThemeToggle } from "../ThemeToggle";
@@ -13,6 +14,8 @@ const SECTIONS = [
 ];
 
 export function PublicHeader() {
+  const { status } = useAuth();
+
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -37,19 +40,27 @@ export function PublicHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            to="/login"
-            className={buttonClasses({
-              variant: "ghost",
-              size: "sm",
-              className: "hidden sm:inline-flex",
-            })}
-          >
-            Sign in
-          </Link>
-          <Link to="/register" className={buttonClasses({ size: "sm" })}>
-            Get started
-          </Link>
+          {status === "authenticated" ? (
+            <Link to="/app" className={buttonClasses({ size: "sm" })}>
+              Go to dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className={buttonClasses({
+                  variant: "ghost",
+                  size: "sm",
+                  className: "hidden sm:inline-flex",
+                })}
+              >
+                Sign in
+              </Link>
+              <Link to="/register" className={buttonClasses({ size: "sm" })}>
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

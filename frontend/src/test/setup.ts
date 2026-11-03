@@ -1,6 +1,8 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+import { tokenStore } from "../lib/api/token-store";
+
 // jsdom does not implement matchMedia; provide a minimal "light system theme" stand-in.
 if (!window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
@@ -18,10 +20,11 @@ if (!window.matchMedia) {
   });
 }
 
-// Reset the DOM, stubbed globals and storage after every test, so tests never leak state.
+// Reset the DOM, stubbed globals, storage and session after every test.
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   localStorage.clear();
+  tokenStore.clear();
   document.documentElement.className = "";
 });
