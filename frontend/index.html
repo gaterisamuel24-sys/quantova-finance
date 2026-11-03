@@ -9,20 +9,8 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Quantova Finance</title>
-    <script>
-      // Apply the saved theme before the first paint, so dark-theme users never see a white flash.
-      (function () {
-        try {
-          var stored = localStorage.getItem("quantova-theme");
-          var system = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (stored === "dark" || ((stored === null || stored === "system") && system)) {
-            document.documentElement.classList.add("dark");
-          }
-        } catch (e) {
-          // Storage unavailable: the theme provider falls back to the system theme.
-        }
-      })();
-    </script>
+    <!-- Blocking on purpose: the theme must be set before the page is drawn. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
