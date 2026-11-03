@@ -43,9 +43,19 @@ Invoke-Check "Backend: Ruff format"    "backend" { & $py -m ruff format --check 
 Invoke-Check "Backend: mypy"           "backend" { & $py -m mypy }
 Invoke-Check "Backend: tests"          "backend" { & $py -m pytest -q }
 
+# API contract: regenerate, then fail if the committed files differ.
+Invoke-Check "API contract: openapi.json"  "backend" {
+    & $py -m app.openapi_export ../frontend/openapi.json | Out-Null
+    git diff --exit-code -- ../frontend/openapi.json
+}
+Invoke-Check "API contract: schema.d.ts"   "frontend" {
+    npm run --silent api:generate | Out-Null
+    git diff --exit-code -- src/lib/api/schema.d.ts
+}
+
 # Frontend
 Invoke-Check "Frontend: Prettier"      "frontend" { npm run --silent format:check }
-Invoke-Check "Frontend: ESLint"        "frontend" { npm run --silent lint }
+Invoke-Check "Frontend: lint"          "frontend" { npm run --silent lint }
 Invoke-Check "Frontend: tests"         "frontend" { npm run --silent test }
 Invoke-Check "Frontend: build"         "frontend" { npm run --silent build }
 

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useAuth } from "../../features/auth/auth-context";
 import { cn } from "../../lib/cn";
 import { Logo } from "../brand/Logo";
+import { SkipLink } from "../SkipLink";
 import { ThemeToggle } from "../ThemeToggle";
 import { buttonClasses } from "../ui/button-styles";
 import { focusRing } from "../ui/styles";
@@ -18,6 +19,7 @@ export function PublicHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
+      <SkipLink />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link to="/" aria-label="Quantova Finance home" className={cn("rounded-lg", focusRing)}>
           <Logo />

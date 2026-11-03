@@ -4,7 +4,7 @@ AI-powered financial intelligence platform for businesses, analysts, investors
 and financial consultants: dashboards, income and expense tracking, profit and
 loss analysis, cash flow forecasting, reporting and automated insights.
 
-> **Status:** Phase 2 (backend core and authentication) complete. Next: Phase 3, frontend.
+> **Status:** Phase 3 (frontend foundation, authentication and app shell) complete. Next: Phase 4, financial intelligence.
 
 ## Tech stack
 
@@ -118,6 +118,34 @@ Before pushing, run every check that CI runs:
 ./scripts/check.ps1
 ```
 
+## Frontend
+
+Run in `frontend`:
+
+| Command | Purpose |
+| ------- | ------- |
+| `npm run dev` | Development server on http://localhost:5173 (proxies `/api` to the backend) |
+| `npm run test` | Unit and integration tests (Vitest, Testing Library) |
+| `npm run lint` / `npm run format` | Lint (oxlint) and format (Prettier) |
+| `npm run build` | Type-check and production build |
+
+The access token is kept in memory only; sessions survive page reloads through the
+HttpOnly refresh cookie. Server data is cached with TanStack Query and cleared on sign-out.
+In development, `/design` shows the component library in both themes.
+
+## API contract
+
+The frontend's TypeScript types are generated from the backend's OpenAPI schema.
+After changing any backend endpoint or schema:
+
+```powershell
+# in backend/
+uv run python -m app.openapi_export ../frontend/openapi.json
+# in frontend/
+npm run api:generate
+```
+
+Commit both generated files. `scripts/check.ps1` and CI fail if either is out of date.
 ## Database migrations
 
 Run in `backend`:

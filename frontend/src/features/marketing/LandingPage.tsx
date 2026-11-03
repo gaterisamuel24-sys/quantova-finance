@@ -159,7 +159,7 @@ export function LandingPage() {
       <title>Quantova Finance · AI-powered financial intelligence</title>
       <PublicHeader />
 
-      <main>
+      <main id="main-content" tabIndex={-1} className="outline-none">
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-2 lg:pt-24">
           <div>
             <Badge tone="brand">AI-powered financial intelligence</Badge>

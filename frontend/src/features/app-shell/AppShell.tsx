@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, Outlet, useParams } from "react-router";
 
 import { FullPageSpinner } from "../../components/FullPageSpinner";
+import { SkipLink } from "../../components/SkipLink";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { buttonClasses } from "../../components/ui/button-styles";
@@ -53,6 +54,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <SkipLink />
       <div className="hidden lg:sticky lg:top-0 lg:block lg:h-screen">
         <Sidebar organization={organization} organizations={organizations} />
       </div>
@@ -67,7 +69,11 @@ export function AppShell() {
       )}
       <div className="flex min-w-0 flex-col">
         <TopBar title="Overview" onOpenNav={() => setNavOpen(true)} />
-        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 px-4 py-8 outline-none sm:px-6 lg:px-8"
+        >
           <Outlet context={organization} />
         </main>
       </div>
