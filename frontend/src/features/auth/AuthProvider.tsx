@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { api } from "../../lib/api/client";
@@ -23,7 +24,15 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>({ status: "loading", user: null });
+
+  // Ending a session also wipes cached server data, so the next person to use this
+  // browser can never see the previous user's organizations, even briefly.
+  const becomeAnonymous = useCallback(() => {
+    queryClient.clear();
+    setState(ANONYMOUS);
+  }, [queryClient]);
 
   // On first load, try to restore the session from the HttpOnly refresh cookie.
   useEffect(() => {
@@ -42,9 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       tokenStore.subscribe((token) => {
-        if (token === null) setState(ANONYMOUS);
+        if (token === null) becomeAnonymous();
       }),
-    [],
+    [becomeAnonymous],
   );
 
   const login = useCallback(async (email: string, password: string) => {
@@ -82,9 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       // Even if the network call fails, this browser forgets the session.
       tokenStore.clear();
-      setState(ANONYMOUS);
+      becomeAnonymous();
     }
-  }, []);
+  }, [becomeAnonymous]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ ...state, login, register, logout }),

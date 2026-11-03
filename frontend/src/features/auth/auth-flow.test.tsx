@@ -1,77 +1,11 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { json, type FetchHandler } from "../../test/fake-api";
+import { createFakeBackend, PASSWORD } from "../../test/fake-backend";
 import { renderRoute } from "../../test/render";
 
-const PASSWORD = "correct horse battery staple";
-
-type FakeUser = {
-  id: string;
-  email: string;
-  full_name: string;
-  is_email_verified: boolean;
-  platform_role: "user";
-  created_at: string;
-};
-
-function makeUser(email: string, fullName: string): FakeUser {
-  return {
-    id: crypto.randomUUID(),
-    email,
-    full_name: fullName,
-    is_email_verified: false,
-    platform_role: "user",
-    created_at: "2026-11-03T08:00:00Z",
-  };
-}
-
-const token = (value: string) => ({ access_token: value, token_type: "bearer", expires_in: 900 });
-
-/** A small simulated auth backend that follows the real API's rules. */
-function fakeAuthBackend({ hasSessionCookie = false } = {}): FetchHandler {
-  const amina = makeUser("amina@example.com", "Amina Otieno");
-  const accounts = new Map([[amina.email, { password: PASSWORD, user: amina }]]);
-  let current: FakeUser | null = hasSessionCookie ? amina : null;
-
-  return async (request) => {
-    const path = new URL(request.url).pathname;
-    switch (path) {
-      case "/api/v1/auth/refresh":
-        return current
-          ? json(200, token("restored"))
-          : json(401, { detail: "Session expired. Please log in again." });
-      case "/api/v1/auth/login": {
-        const body = (await request.json()) as { email: string; password: string };
-        const account = accounts.get(body.email);
-        if (account?.password !== body.password) {
-          return json(401, { detail: "Incorrect email or password." });
-        }
-        current = account.user;
-        return json(200, token("signed-in"));
-      }
-      case "/api/v1/auth/register": {
-        const body = (await request.json()) as {
-          email: string;
-          password: string;
-          full_name: string;
-        };
-        const user = makeUser(body.email, body.full_name);
-        accounts.set(body.email, { password: body.password, user });
-        return json(201, user);
-      }
-      case "/api/v1/auth/me":
-        return current && request.headers.get("Authorization")
-          ? json(200, current)
-          : json(401, { detail: "Not authenticated" });
-      case "/api/v1/auth/logout":
-        current = null;
-        return json(204);
-      default:
-        return json(404, { detail: "Not Found" });
-    }
-  };
-}
+const ONBOARDING = { name: "Create your first organization" };
+const SIGN_IN = { name: "Sign in to Quantova" };
 
 async function fillAndSubmit(fields: Record<string, string>, submitLabel: string) {
   for (const [label, value] of Object.entries(fields)) {
@@ -81,18 +15,18 @@ async function fillAndSubmit(fields: Record<string, string>, submitLabel: string
 }
 
 describe("authentication flow", () => {
-  it("sends visitors to sign in, then back to the page they wanted", async () => {
-    const { router } = renderRoute("/app", fakeAuthBackend());
+  it("sends visitors to sign in, then on into the app", async () => {
+    const { router } = renderRoute("/app", createFakeBackend());
 
-    expect(await screen.findByRole("heading", { name: "Sign in to Quantova" })).toBeTruthy();
+    expect(await screen.findByRole("heading", SIGN_IN)).toBeTruthy();
     await fillAndSubmit({ Email: "amina@example.com", Password: PASSWORD }, "Sign in");
 
-    expect(await screen.findByRole("heading", { name: "Welcome, Amina Otieno" })).toBeTruthy();
-    expect(router.state.location.pathname).toBe("/app");
+    expect(await screen.findByRole("heading", ONBOARDING)).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/app/new");
   });
 
   it("shows the server's message for a wrong password", async () => {
-    renderRoute("/login", fakeAuthBackend());
+    renderRoute("/login", createFakeBackend());
 
     await fillAndSubmit({ Email: "amina@example.com", Password: "wrong-password-123" }, "Sign in");
 
@@ -102,21 +36,22 @@ describe("authentication flow", () => {
   });
 
   it("restores the session on reload using the refresh cookie", async () => {
-    renderRoute("/login", fakeAuthBackend({ hasSessionCookie: true }));
+    renderRoute("/login", createFakeBackend({ signedIn: true }));
 
-    expect(await screen.findByRole("heading", { name: "Welcome, Amina Otieno" })).toBeTruthy();
+    expect(await screen.findByRole("heading", ONBOARDING)).toBeTruthy();
   });
 
-  it("signs out and returns to the sign-in page", async () => {
-    renderRoute("/app", fakeAuthBackend({ hasSessionCookie: true }));
+  it("signs out from the account menu and returns to sign in", async () => {
+    renderRoute("/app/new", createFakeBackend({ signedIn: true }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Account menu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
 
-    expect(await screen.findByRole("heading", { name: "Sign in to Quantova" })).toBeTruthy();
+    expect(await screen.findByRole("heading", SIGN_IN)).toBeTruthy();
   });
 
   it("rejects a short password before contacting the server", async () => {
-    const { fetchMock } = renderRoute("/register", fakeAuthBackend());
+    const { fetchMock } = renderRoute("/register", createFakeBackend());
 
     await fillAndSubmit(
       { "Full name": "Brian Kamau", Email: "brian@example.com", Password: "too-short" },
@@ -131,13 +66,13 @@ describe("authentication flow", () => {
   });
 
   it("creates an account and signs the new user in", async () => {
-    renderRoute("/register", fakeAuthBackend());
+    renderRoute("/register", createFakeBackend());
 
     await fillAndSubmit(
       { "Full name": "Brian Kamau", Email: "brian@example.com", Password: PASSWORD },
       "Create account",
     );
 
-    expect(await screen.findByRole("heading", { name: "Welcome, Brian Kamau" })).toBeTruthy();
+    expect(await screen.findByRole("heading", ONBOARDING)).toBeTruthy();
   });
 });

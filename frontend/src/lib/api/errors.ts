@@ -32,3 +32,20 @@ export function fieldErrors(error: unknown): Record<string, string> {
   }
   return result;
 }
+
+/** An API call that failed, with a readable message, the HTTP status and per-field errors. */
+export class ApiRequestError extends Error {
+  readonly status: number;
+  readonly fieldErrors: Record<string, string>;
+
+  constructor(message: string, status: number, fields: Record<string, string> = {}) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.fieldErrors = fields;
+  }
+}
+
+export function toApiError(error: unknown, response: Response, fallback: string): ApiRequestError {
+  return new ApiRequestError(errorMessage(error, fallback), response.status, fieldErrors(error));
+}

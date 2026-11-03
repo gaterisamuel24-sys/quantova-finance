@@ -1,9 +1,11 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { routes } from "../app/routes";
 import { ThemeProvider } from "../app/theme/ThemeProvider";
 import { AuthProvider } from "../features/auth/AuthProvider";
+import { createQueryClient } from "../lib/query-client";
 import { json, stubFetch, type FetchHandler } from "./fake-api";
 
 const SIGNED_OUT: FetchHandler = () => json(401, { detail: "Not authenticated" });
@@ -14,9 +16,11 @@ export function renderRoute(path: string, backend: FetchHandler = SIGNED_OUT) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const view = render(
     <ThemeProvider>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
+      <QueryClientProvider client={createQueryClient({ retry: false })}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>,
   );
   return { ...view, router, fetchMock };
