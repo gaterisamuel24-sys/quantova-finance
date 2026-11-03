@@ -255,6 +255,40 @@
         "title": "EntryKind",
         "type": "string"
       },
+      "FactResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "money",
+              "percent",
+              "count",
+              "months"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "value",
+          "unit"
+        ],
+        "title": "FactResponse",
+        "type": "object"
+      },
       "Granularity": {
         "enum": [
           "day",
@@ -390,6 +424,130 @@
         "title": "ImportRowError",
         "type": "object"
       },
+      "InsightList": {
+        "properties": {
+          "ai_enabled": {
+            "title": "Ai Enabled",
+            "type": "boolean"
+          },
+          "daily_limit": {
+            "title": "Daily Limit",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InsightResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "remaining_today": {
+            "title": "Remaining Today",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "ai_enabled",
+          "daily_limit",
+          "remaining_today"
+        ],
+        "title": "InsightList",
+        "type": "object"
+      },
+      "InsightRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "$ref": "#/components/schemas/Period",
+            "default": "this_month"
+          }
+        },
+        "title": "InsightRequest",
+        "type": "object"
+      },
+      "InsightResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/FactResponse"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_preset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Period"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/Suggestion"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "period_start",
+          "period_end",
+          "period_preset",
+          "currency",
+          "headline",
+          "observations",
+          "suggestions",
+          "facts",
+          "model"
+        ],
+        "title": "InsightResponse",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "properties": {
@@ -478,6 +636,43 @@
           "role"
         ],
         "title": "MemberRoleUpdate",
+        "type": "object"
+      },
+      "Observation": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fact Ids",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "positive",
+              "negative",
+              "neutral",
+              "risk"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "detail",
+          "kind",
+          "fact_ids"
+        ],
+        "title": "Observation",
         "type": "object"
       },
       "OrgRole": {
@@ -840,6 +1035,32 @@
           "full_name"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "Suggestion": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fact Ids",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "detail",
+          "fact_ids"
+        ],
+        "title": "Suggestion",
         "type": "object"
       },
       "SummaryResponse": {
@@ -2186,6 +2407,170 @@
         "summary": "List Categories",
         "tags": [
           "ledger"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/insights": {
+      "get": {
+        "description": "The latest insights, newest first, and how many more can be generated today.",
+        "operationId": "list_insights_api_v1_orgs__org_id__insights_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Insights",
+        "tags": [
+          "insights"
+        ]
+      },
+      "post": {
+        "description": "Explain the period's figures in plain language. Uses the AI service.",
+        "operationId": "generate_insight_api_v1_orgs__org_id__insights_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate Insight",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/insights/{insight_id}": {
+      "get": {
+        "operationId": "get_insight_api_v1_orgs__org_id__insights__insight_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "insight_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Insight Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Insight",
+        "tags": [
+          "insights"
         ]
       }
     },

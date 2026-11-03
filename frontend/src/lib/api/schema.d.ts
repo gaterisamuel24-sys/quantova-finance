@@ -253,6 +253,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Insights
+         * @description The latest insights, newest first, and how many more can be generated today.
+         */
+        get: operations["list_insights_api_v1_orgs__org_id__insights_get"];
+        put?: never;
+        /**
+         * Generate Insight
+         * @description Explain the period's figures in plain language. Uses the AI service.
+         */
+        post: operations["generate_insight_api_v1_orgs__org_id__insights_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/insights/{insight_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Insight */
+        get: operations["get_insight_api_v1_orgs__org_id__insights__insight_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/members": {
         parameters: {
             query?: never;
@@ -541,6 +582,20 @@ export interface components {
          * @enum {string}
          */
         EntryKind: "income" | "expense";
+        /** FactResponse */
+        FactResponse: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "money" | "percent" | "count" | "months";
+            /** Value */
+            value: string;
+        };
         /**
          * Granularity
          * @enum {string}
@@ -595,6 +650,58 @@ export interface components {
             /** Row */
             row: number;
         };
+        /** InsightList */
+        InsightList: {
+            /** Ai Enabled */
+            ai_enabled: boolean;
+            /** Daily Limit */
+            daily_limit: number;
+            /** Items */
+            items: components["schemas"]["InsightResponse"][];
+            /** Remaining Today */
+            remaining_today: number;
+        };
+        /** InsightRequest */
+        InsightRequest: {
+            /** @default this_month */
+            period: components["schemas"]["Period"];
+        };
+        /** InsightResponse */
+        InsightResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Facts */
+            facts: components["schemas"]["FactResponse"][];
+            /** Headline */
+            headline: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model */
+            model: string;
+            /** Observations */
+            observations: components["schemas"]["Observation"][];
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            period_preset: components["schemas"]["Period"] | null;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Suggestions */
+            suggestions: components["schemas"]["Suggestion"][];
+        };
         /** LoginRequest */
         LoginRequest: {
             /**
@@ -638,6 +745,20 @@ export interface components {
         /** MemberRoleUpdate */
         MemberRoleUpdate: {
             role: components["schemas"]["OrgRole"];
+        };
+        /** Observation */
+        Observation: {
+            /** Detail */
+            detail: string;
+            /** Fact Ids */
+            fact_ids: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "positive" | "negative" | "neutral" | "risk";
+            /** Title */
+            title: string;
         };
         /**
          * OrgRole
@@ -783,6 +904,15 @@ export interface components {
              * Format: password
              */
             password: string;
+        };
+        /** Suggestion */
+        Suggestion: {
+            /** Detail */
+            detail: string;
+            /** Fact Ids */
+            fact_ids: string[];
+            /** Title */
+            title: string;
         };
         /** SummaryResponse */
         SummaryResponse: {
@@ -1433,6 +1563,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_insights_api_v1_orgs__org_id__insights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_insight_api_v1_orgs__org_id__insights_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_insight_api_v1_orgs__org_id__insights__insight_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                insight_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightResponse"];
                 };
             };
             /** @description Validation Error */
