@@ -1,29 +1,25 @@
 import { useEffect, useState } from "react";
 
+import { api } from "../../lib/api/client";
+import type { components } from "../../lib/api/schema";
 import { cn } from "../../lib/cn";
-import { apiUrl } from "../../lib/config";
 
-// Mirrors HealthResponse in backend/app/schemas/health.py (generated types arrive in step 3.2).
-type Health = {
-  status: "ok";
-  service: string;
-  version: string;
-  environment: string;
-};
+type Health = components["schemas"]["HealthResponse"];
 
 type ApiState =
   { kind: "loading" } | { kind: "ok"; data: Health } | { kind: "error"; message: string };
 
 export function ApiStatus() {
-  const [api, setApi] = useState<ApiState>({ kind: "loading" });
+  const [api_, setApi] = useState<ApiState>({ kind: "loading" });
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(apiUrl("/api/v1/health"), { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        setApi({ kind: "ok", data: (await response.json()) as Health });
+    api
+      .GET("/api/v1/health", { signal: controller.signal })
+      .then(({ data, response }) => {
+        if (data === undefined) throw new Error(`HTTP ${response.status}`);
+        setApi({ kind: "ok", data });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -41,16 +37,16 @@ export function ApiStatus() {
       <span
         className={cn(
           "size-2.5 rounded-full",
-          api.kind === "ok" && "bg-positive",
-          api.kind === "error" && "bg-negative",
-          api.kind === "loading" && "bg-warning",
+          api_.kind === "ok" && "bg-positive",
+          api_.kind === "error" && "bg-negative",
+          api_.kind === "loading" && "bg-warning",
         )}
       />
       <span>
-        {api.kind === "loading" && "Connecting to API…"}
-        {api.kind === "ok" &&
-          `API ${api.data.status} · ${api.data.environment} · v${api.data.version}`}
-        {api.kind === "error" && `API unreachable (${api.message})`}
+        {api_.kind === "loading" && "Connecting to API…"}
+        {api_.kind === "ok" &&
+          `API ${api_.data.status} · ${api_.data.environment} · v${api_.data.version}`}
+        {api_.kind === "error" && `API unreachable (${api_.message})`}
       </span>
     </div>
   );

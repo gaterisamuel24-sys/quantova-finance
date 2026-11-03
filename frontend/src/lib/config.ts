@@ -3,6 +3,9 @@
 /** API base URL without a trailing slash. Empty string means "same origin". */
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
 
+/** Absolute API origin: the configured base URL, or this page's own origin. */
+export const API_ORIGIN = API_BASE_URL || window.location.origin;
+
 /** Build a full API URL from a path such as "/api/v1/health". */
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
