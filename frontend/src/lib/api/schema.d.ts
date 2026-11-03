@@ -176,6 +176,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/analytics/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cash Flow
+         * @description Money in and out per day, week (Monday start) or month, with running cash balance.
+         */
+        get: operations["cash_flow_api_v1_orgs__org_id__analytics_cash_flow_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/analytics/profit-loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profit Loss
+         * @description Income and expenses by category, with net profit and margin.
+         */
+        get: operations["profit_loss_api_v1_orgs__org_id__analytics_profit_loss_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/analytics/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Income, expenses and net for the range, compared with the period before it.
+         */
+        get: operations["summary_api_v1_orgs__org_id__analytics_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/categories": {
         parameters: {
             query?: never;
@@ -335,6 +395,53 @@ export interface components {
             /** File */
             file: string;
         };
+        /** CashFlowPoint */
+        CashFlowPoint: {
+            /** Closing Balance */
+            closing_balance: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Expenses */
+            expenses: string;
+            /** Income */
+            income: string;
+            /** Net */
+            net: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+        };
+        /** CashFlowResponse */
+        CashFlowResponse: {
+            /** Closing Balance */
+            closing_balance: string;
+            /** Currency */
+            currency: string;
+            granularity: components["schemas"]["Granularity"];
+            /** Opening Balance */
+            opening_balance: string;
+            period: components["schemas"]["PeriodResponse"];
+            /** Points */
+            points: components["schemas"]["CashFlowPoint"][];
+        };
+        /** CategoryLine */
+        CategoryLine: {
+            /** Amount */
+            amount: string;
+            /** Category Id */
+            category_id: string | null;
+            /** Name */
+            name: string;
+            /** Share Pct */
+            share_pct: string | null;
+            /** Transaction Count */
+            transaction_count: number;
+        };
         /** CategoryResponse */
         CategoryResponse: {
             /**
@@ -350,12 +457,24 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** CategorySection */
+        CategorySection: {
+            /** Lines */
+            lines: components["schemas"]["CategoryLine"][];
+            /** Total */
+            total: string;
+        };
         /**
          * EntryKind
          * @description Direction of money. Shared by categories and transactions so the two must agree.
          * @enum {string}
          */
         EntryKind: "income" | "expense";
+        /**
+         * Granularity
+         * @enum {string}
+         */
+        Granularity: "day" | "week" | "month";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -505,11 +624,68 @@ export interface components {
             name?: string | null;
         };
         /**
+         * Period
+         * @description Named periods. Quarters and years follow the organization's fiscal year.
+         * @enum {string}
+         */
+        Period: "this_month" | "last_month" | "this_quarter" | "last_quarter" | "this_fiscal_year" | "last_fiscal_year" | "last_30_days" | "last_12_months";
+        /**
+         * PeriodChange
+         * @description Percentage change from the previous period to this one.
+         */
+        PeriodChange: {
+            /** Expenses Pct */
+            expenses_pct: string | null;
+            /** Income Pct */
+            income_pct: string | null;
+            /** Net Pct */
+            net_pct: string | null;
+        };
+        /** PeriodResponse */
+        PeriodResponse: {
+            /** Days */
+            days: number;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            preset?: components["schemas"]["Period"] | null;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+        };
+        /** PeriodTotals */
+        PeriodTotals: {
+            /** Expenses */
+            expenses: string;
+            /** Income */
+            income: string;
+            /** Net */
+            net: string;
+            /** Transaction Count */
+            transaction_count: number;
+        };
+        /**
          * PlatformRole
          * @description Platform-wide role. Superadmins operate the SaaS itself (support, admin pages).
          * @enum {string}
          */
         PlatformRole: "user" | "superadmin";
+        /** ProfitLossResponse */
+        ProfitLossResponse: {
+            /** Currency */
+            currency: string;
+            expenses: components["schemas"]["CategorySection"];
+            income: components["schemas"]["CategorySection"];
+            /** Margin Pct */
+            margin_pct: string | null;
+            /** Net Profit */
+            net_profit: string;
+            period: components["schemas"]["PeriodResponse"];
+        };
         /** ReadinessResponse */
         ReadinessResponse: {
             /** Checks */
@@ -536,6 +712,25 @@ export interface components {
              * Format: password
              */
             password: string;
+        };
+        /** SummaryResponse */
+        SummaryResponse: {
+            /** Cash Balance */
+            cash_balance: string;
+            /**
+             * Cash Balance As Of
+             * Format: date
+             */
+            cash_balance_as_of: string;
+            change: components["schemas"]["PeriodChange"];
+            /** Currency */
+            currency: string;
+            current: components["schemas"]["PeriodTotals"];
+            /** Other Currency Transaction Count */
+            other_currency_transaction_count: number;
+            period: components["schemas"]["PeriodResponse"];
+            previous: components["schemas"]["PeriodTotals"];
+            previous_period: components["schemas"]["PeriodResponse"];
         };
         /** TokenResponse */
         TokenResponse: {
@@ -1021,6 +1216,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_flow_api_v1_orgs__org_id__analytics_cash_flow_get: {
+        parameters: {
+            query?: {
+                granularity?: components["schemas"]["Granularity"];
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profit_loss_api_v1_orgs__org_id__analytics_profit_loss_get: {
+        parameters: {
+            query?: {
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitLossResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_orgs__org_id__analytics_summary_get: {
+        parameters: {
+            query?: {
+                /** @description Named period. Defaults to this_month. */
+                period?: components["schemas"]["Period"] | null;
+                /** @description Custom range start (inclusive) */
+                date_from?: string | null;
+                /** @description Custom range end (inclusive) */
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryResponse"];
                 };
             };
             /** @description Validation Error */

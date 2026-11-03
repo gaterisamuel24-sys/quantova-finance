@@ -65,6 +65,133 @@
         "title": "Body_import_transactions_api_v1_orgs__org_id__transactions_import_post",
         "type": "object"
       },
+      "CashFlowPoint": {
+        "properties": {
+          "closing_balance": {
+            "title": "Closing Balance",
+            "type": "string"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "expenses": {
+            "title": "Expenses",
+            "type": "string"
+          },
+          "income": {
+            "title": "Income",
+            "type": "string"
+          },
+          "net": {
+            "title": "Net",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "income",
+          "expenses",
+          "net",
+          "closing_balance"
+        ],
+        "title": "CashFlowPoint",
+        "type": "object"
+      },
+      "CashFlowResponse": {
+        "properties": {
+          "closing_balance": {
+            "title": "Closing Balance",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/Granularity"
+          },
+          "opening_balance": {
+            "title": "Opening Balance",
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodResponse"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/CashFlowPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "period",
+          "granularity",
+          "opening_balance",
+          "closing_balance",
+          "points"
+        ],
+        "title": "CashFlowResponse",
+        "type": "object"
+      },
+      "CategoryLine": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "share_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Pct"
+          },
+          "transaction_count": {
+            "title": "Transaction Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "amount",
+          "transaction_count",
+          "share_pct"
+        ],
+        "title": "CategoryLine",
+        "type": "object"
+      },
       "CategoryResponse": {
         "properties": {
           "id": {
@@ -98,6 +225,27 @@
         "title": "CategoryResponse",
         "type": "object"
       },
+      "CategorySection": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "lines"
+        ],
+        "title": "CategorySection",
+        "type": "object"
+      },
       "EntryKind": {
         "description": "Direction of money. Shared by categories and transactions so the two must agree.",
         "enum": [
@@ -105,6 +253,15 @@
           "expense"
         ],
         "title": "EntryKind",
+        "type": "string"
+      },
+      "Granularity": {
+        "enum": [
+          "day",
+          "week",
+          "month"
+        ],
+        "title": "Granularity",
         "type": "string"
       },
       "HTTPValidationError": {
@@ -451,6 +608,129 @@
         "title": "OrganizationUpdate",
         "type": "object"
       },
+      "Period": {
+        "description": "Named periods. Quarters and years follow the organization's fiscal year.",
+        "enum": [
+          "this_month",
+          "last_month",
+          "this_quarter",
+          "last_quarter",
+          "this_fiscal_year",
+          "last_fiscal_year",
+          "last_30_days",
+          "last_12_months"
+        ],
+        "title": "Period",
+        "type": "string"
+      },
+      "PeriodChange": {
+        "description": "Percentage change from the previous period to this one.",
+        "properties": {
+          "expenses_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expenses Pct"
+          },
+          "income_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Income Pct"
+          },
+          "net_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Pct"
+          }
+        },
+        "required": [
+          "income_pct",
+          "expenses_pct",
+          "net_pct"
+        ],
+        "title": "PeriodChange",
+        "type": "object"
+      },
+      "PeriodResponse": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Period"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "days"
+        ],
+        "title": "PeriodResponse",
+        "type": "object"
+      },
+      "PeriodTotals": {
+        "properties": {
+          "expenses": {
+            "title": "Expenses",
+            "type": "string"
+          },
+          "income": {
+            "title": "Income",
+            "type": "string"
+          },
+          "net": {
+            "title": "Net",
+            "type": "string"
+          },
+          "transaction_count": {
+            "title": "Transaction Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "income",
+          "expenses",
+          "net",
+          "transaction_count"
+        ],
+        "title": "PeriodTotals",
+        "type": "object"
+      },
       "PlatformRole": {
         "description": "Platform-wide role. Superadmins operate the SaaS itself (support, admin pages).",
         "enum": [
@@ -459,6 +739,48 @@
         ],
         "title": "PlatformRole",
         "type": "string"
+      },
+      "ProfitLossResponse": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "expenses": {
+            "$ref": "#/components/schemas/CategorySection"
+          },
+          "income": {
+            "$ref": "#/components/schemas/CategorySection"
+          },
+          "margin_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Pct"
+          },
+          "net_profit": {
+            "title": "Net Profit",
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodResponse"
+          }
+        },
+        "required": [
+          "currency",
+          "period",
+          "income",
+          "expenses",
+          "net_profit",
+          "margin_pct"
+        ],
+        "title": "ProfitLossResponse",
+        "type": "object"
       },
       "ReadinessResponse": {
         "properties": {
@@ -518,6 +840,55 @@
           "full_name"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "SummaryResponse": {
+        "properties": {
+          "cash_balance": {
+            "title": "Cash Balance",
+            "type": "string"
+          },
+          "cash_balance_as_of": {
+            "format": "date",
+            "title": "Cash Balance As Of",
+            "type": "string"
+          },
+          "change": {
+            "$ref": "#/components/schemas/PeriodChange"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "current": {
+            "$ref": "#/components/schemas/PeriodTotals"
+          },
+          "other_currency_transaction_count": {
+            "title": "Other Currency Transaction Count",
+            "type": "integer"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodResponse"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/PeriodTotals"
+          },
+          "previous_period": {
+            "$ref": "#/components/schemas/PeriodResponse"
+          }
+        },
+        "required": [
+          "currency",
+          "period",
+          "previous_period",
+          "current",
+          "previous",
+          "change",
+          "cash_balance",
+          "cash_balance_as_of",
+          "other_currency_transaction_count"
+        ],
+        "title": "SummaryResponse",
         "type": "object"
       },
       "TokenResponse": {
@@ -1439,6 +1810,330 @@
         "summary": "List Accounts",
         "tags": [
           "ledger"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/analytics/cash-flow": {
+      "get": {
+        "description": "Money in and out per day, week (Monday start) or month, with running cash balance.",
+        "operationId": "cash_flow_api_v1_orgs__org_id__analytics_cash_flow_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granularity",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Granularity",
+              "default": "month"
+            }
+          },
+          {
+            "description": "Named period. Defaults to this_month.",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Period"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Named period. Defaults to this_month.",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "Custom range start (inclusive)",
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range start (inclusive)",
+              "title": "Date From"
+            }
+          },
+          {
+            "description": "Custom range end (inclusive)",
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range end (inclusive)",
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cash Flow",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/analytics/profit-loss": {
+      "get": {
+        "description": "Income and expenses by category, with net profit and margin.",
+        "operationId": "profit_loss_api_v1_orgs__org_id__analytics_profit_loss_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Named period. Defaults to this_month.",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Period"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Named period. Defaults to this_month.",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "Custom range start (inclusive)",
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range start (inclusive)",
+              "title": "Date From"
+            }
+          },
+          {
+            "description": "Custom range end (inclusive)",
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range end (inclusive)",
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitLossResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Profit Loss",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/analytics/summary": {
+      "get": {
+        "description": "Income, expenses and net for the range, compared with the period before it.",
+        "operationId": "summary_api_v1_orgs__org_id__analytics_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Named period. Defaults to this_month.",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Period"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Named period. Defaults to this_month.",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "Custom range start (inclusive)",
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range start (inclusive)",
+              "title": "Date From"
+            }
+          },
+          {
+            "description": "Custom range end (inclusive)",
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Custom range end (inclusive)",
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Summary",
+        "tags": [
+          "analytics"
         ]
       }
     },
