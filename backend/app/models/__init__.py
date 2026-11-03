@@ -8,6 +8,7 @@ from app.models.financial_account import FinancialAccount
 from app.models.membership import Membership
 from app.models.organization import Organization
 from app.models.refresh_token import RefreshToken
+from app.models.subscription import Subscription
 from app.models.transaction import Transaction
 from app.models.user import User
 
@@ -23,6 +24,7 @@ __all__ = [
     "Organization",
     "PlatformRole",
     "RefreshToken",
+    "Subscription",
     "Transaction",
     "User",
 ]

@@ -51,6 +51,59 @@
         "title": "AccountType",
         "type": "string"
       },
+      "BillingResponse": {
+        "properties": {
+          "cancel_at_period_end": {
+            "title": "Cancel At Period End",
+            "type": "boolean"
+          },
+          "current_period_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Period End"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PlanResponse"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        },
+        "required": [
+          "plan",
+          "status",
+          "current_period_end",
+          "cancel_at_period_end",
+          "usage",
+          "plans"
+        ],
+        "title": "BillingResponse",
+        "type": "object"
+      },
       "Body_import_transactions_api_v1_orgs__org_id__transactions_import_post": {
         "properties": {
           "file": {
@@ -926,6 +979,52 @@
         "title": "PeriodTotals",
         "type": "object"
       },
+      "PlanId": {
+        "enum": [
+          "free",
+          "pro",
+          "business"
+        ],
+        "title": "PlanId",
+        "type": "string"
+      },
+      "PlanResponse": {
+        "properties": {
+          "ai_insights_per_day": {
+            "title": "Ai Insights Per Day",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/PlanId"
+          },
+          "max_members": {
+            "title": "Max Members",
+            "type": "integer"
+          },
+          "monthly_price_usd": {
+            "title": "Monthly Price Usd",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "monthly_price_usd",
+          "max_members",
+          "ai_insights_per_day"
+        ],
+        "title": "PlanResponse",
+        "type": "object"
+      },
       "PlatformRole": {
         "description": "Platform-wide role. Superadmins operate the SaaS itself (support, admin pages).",
         "enum": [
@@ -1036,6 +1135,21 @@
         ],
         "title": "RegisterRequest",
         "type": "object"
+      },
+      "SubscriptionStatus": {
+        "description": "Mirrors the provider's subscription states (Stripe uses these names).",
+        "enum": [
+          "active",
+          "trialing",
+          "past_due",
+          "incomplete",
+          "incomplete_expired",
+          "unpaid",
+          "canceled",
+          "paused"
+        ],
+        "title": "SubscriptionStatus",
+        "type": "string"
       },
       "Suggestion": {
         "properties": {
@@ -1458,6 +1572,34 @@
           }
         },
         "title": "TransactionUpdate",
+        "type": "object"
+      },
+      "Usage": {
+        "properties": {
+          "ai_insights_per_day": {
+            "title": "Ai Insights Per Day",
+            "type": "integer"
+          },
+          "ai_insights_today": {
+            "title": "Ai Insights Today",
+            "type": "integer"
+          },
+          "max_members": {
+            "title": "Max Members",
+            "type": "integer"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "members",
+          "max_members",
+          "ai_insights_today",
+          "ai_insights_per_day"
+        ],
+        "title": "Usage",
         "type": "object"
       },
       "UserResponse": {
@@ -2358,6 +2500,55 @@
         ]
       }
     },
+    "/api/v1/orgs/{org_id}/billing": {
+      "get": {
+        "description": "The organization's plan, its limits, what has been used, and the available plans.",
+        "operationId": "get_billing_api_v1_orgs__org_id__billing_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Billing",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/orgs/{org_id}/categories": {
       "get": {
         "operationId": "list_categories_api_v1_orgs__org_id__categories_get",
@@ -2412,7 +2603,7 @@
     },
     "/api/v1/orgs/{org_id}/insights": {
       "get": {
-        "description": "The latest insights, newest first, and how many more can be generated today.",
+        "description": "The latest insights, newest first, and how many more the plan allows today.",
         "operationId": "list_insights_api_v1_orgs__org_id__insights_get",
         "parameters": [
           {

@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     analytics,
     auth,
+    billing,
     health,
     imports,
     insights,
@@ -22,3 +23,4 @@ api_router.include_router(imports.router)
 api_router.include_router(analytics.router)
 api_router.include_router(reports.router)
 api_router.include_router(insights.router)
+api_router.include_router(billing.router)

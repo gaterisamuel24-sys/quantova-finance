@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-5.4-mini", min_length=1, max_length=100)
     ai_request_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     ai_max_output_tokens: int = Field(default=1500, ge=200, le=8000)
-    ai_daily_insights_per_org: int = Field(default=20, ge=1, le=1000)
+    # Server-wide safety cap on AI insights per organization per day. The plan's own
+    # allowance applies below it (Free 3, Pro 20, Business 100).
+    ai_daily_insights_per_org: int = Field(default=100, ge=1, le=1000)
 
     @property
     def ai_enabled(self) -> bool:

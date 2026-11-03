@@ -236,6 +236,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Billing
+         * @description The organization's plan, its limits, what has been used, and the available plans.
+         */
+        get: operations["get_billing_api_v1_orgs__org_id__billing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/categories": {
         parameters: {
             query?: never;
@@ -262,7 +282,7 @@ export interface paths {
         };
         /**
          * List Insights
-         * @description The latest insights, newest first, and how many more can be generated today.
+         * @description The latest insights, newest first, and how many more the plan allows today.
          */
         get: operations["list_insights_api_v1_orgs__org_id__insights_get"];
         put?: never;
@@ -502,6 +522,18 @@ export interface components {
          * @enum {string}
          */
         AccountType: "bank" | "cash" | "card" | "mobile_money" | "other";
+        /** BillingResponse */
+        BillingResponse: {
+            /** Cancel At Period End */
+            cancel_at_period_end: boolean;
+            /** Current Period End */
+            current_period_end: string | null;
+            plan: components["schemas"]["PlanResponse"];
+            /** Plans */
+            plans: components["schemas"]["PlanResponse"][];
+            status: components["schemas"]["SubscriptionStatus"] | null;
+            usage: components["schemas"]["Usage"];
+        };
         /** Body_import_transactions_api_v1_orgs__org_id__transactions_import_post */
         Body_import_transactions_api_v1_orgs__org_id__transactions_import_post: {
             /** File */
@@ -861,6 +893,25 @@ export interface components {
             transaction_count: number;
         };
         /**
+         * PlanId
+         * @enum {string}
+         */
+        PlanId: "free" | "pro" | "business";
+        /** PlanResponse */
+        PlanResponse: {
+            /** Ai Insights Per Day */
+            ai_insights_per_day: number;
+            /** Description */
+            description: string;
+            id: components["schemas"]["PlanId"];
+            /** Max Members */
+            max_members: number;
+            /** Monthly Price Usd */
+            monthly_price_usd: string;
+            /** Name */
+            name: string;
+        };
+        /**
          * PlatformRole
          * @description Platform-wide role. Superadmins operate the SaaS itself (support, admin pages).
          * @enum {string}
@@ -905,6 +956,12 @@ export interface components {
              */
             password: string;
         };
+        /**
+         * SubscriptionStatus
+         * @description Mirrors the provider's subscription states (Stripe uses these names).
+         * @enum {string}
+         */
+        SubscriptionStatus: "active" | "trialing" | "past_due" | "incomplete" | "incomplete_expired" | "unpaid" | "canceled" | "paused";
         /** Suggestion */
         Suggestion: {
             /** Detail */
@@ -1042,6 +1099,17 @@ export interface components {
             occurred_on?: string | null;
             /** Reference */
             reference?: string | null;
+        };
+        /** Usage */
+        Usage: {
+            /** Ai Insights Per Day */
+            ai_insights_per_day: number;
+            /** Ai Insights Today */
+            ai_insights_today: number;
+            /** Max Members */
+            max_members: number;
+            /** Members */
+            members: number;
         };
         /** UserResponse */
         UserResponse: {
@@ -1532,6 +1600,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_billing_api_v1_orgs__org_id__billing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingResponse"];
                 };
             };
             /** @description Validation Error */

@@ -10,6 +10,7 @@ from app.api.deps import ClientInfoDep, OrgAnalyst, OrgViewer, SessionDep, Setti
 from app.schemas.insights import InsightList, InsightRequest, InsightResponse
 from app.services.ai.model import AIProviderError, AIUnavailableError, InsightModel
 from app.services.ai.openai_model import build_insight_model
+from app.services.billing.entitlements import get_entitlements
 from app.services.insights import service as insight_service
 
 router = APIRouter(prefix="/orgs/{org_id}/insights", tags=["insights"])
@@ -31,14 +32,16 @@ InsightModelDep = Annotated[InsightModel, Depends(get_insight_model)]
 
 @router.get("", response_model=InsightList)
 async def list_insights(ctx: OrgViewer, session: SessionDep, settings: SettingsDep) -> InsightList:
-    """The latest insights, newest first, and how many more can be generated today."""
+    """The latest insights, newest first, and how many more the plan allows today."""
     insights = await insight_service.list_insights(session, ctx)
-    used = await insight_service.used_today(session, ctx.organization.id, datetime.now(UTC))
+    entitlements = await get_entitlements(
+        session, ctx.organization.id, settings, now=datetime.now(UTC)
+    )
     return InsightList(
         items=[insight_service.insight_response(insight) for insight in insights],
         ai_enabled=settings.ai_enabled,
-        daily_limit=settings.ai_daily_insights_per_org,
-        remaining_today=max(0, settings.ai_daily_insights_per_org - used),
+        daily_limit=entitlements.ai_insights_per_day,
+        remaining_today=entitlements.ai_insights_remaining,
     )
 
 
@@ -52,21 +55,24 @@ async def generate_insight(
     model: InsightModelDep,
 ) -> InsightResponse:
     """Explain the period's figures in plain language. Uses the AI service."""
+    now = datetime.now(UTC)
+    # The daily allowance comes from the organization's plan (capped server-wide).
+    entitlements = await get_entitlements(session, ctx.organization.id, settings, now=now)
     try:
         insight = await insight_service.generate_insight(
             session,
             ctx,
             model,
             preset=payload.period,
-            now=datetime.now(UTC),
-            daily_limit=settings.ai_daily_insights_per_org,
+            now=now,
+            daily_limit=entitlements.ai_insights_per_day,
             client=client,
         )
     except insight_service.DailyLimitReachedError as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"This organization has used all {exc.limit} insights for today. "
-            "The limit resets at midnight UTC.",
+            detail=f"The {entitlements.plan.name} plan includes {exc.limit} insights a day, "
+            "and they have all been used. The allowance resets at midnight UTC.",
         ) from exc
     except insight_service.NotEnoughDataError as exc:
         raise HTTPException(
