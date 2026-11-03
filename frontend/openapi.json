@@ -51,6 +51,20 @@
         "title": "AccountType",
         "type": "string"
       },
+      "Body_import_transactions_api_v1_orgs__org_id__transactions_import_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_transactions_api_v1_orgs__org_id__transactions_import_post",
+        "type": "object"
+      },
       "CategoryResponse": {
         "properties": {
           "id": {
@@ -133,6 +147,90 @@
           "environment"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "ImportReport": {
+        "properties": {
+          "error_count": {
+            "title": "Error Count",
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowError"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "imported_count": {
+            "title": "Imported Count",
+            "type": "integer"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "rejected",
+              "validated",
+              "imported"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "filename",
+          "row_count",
+          "imported_count",
+          "error_count",
+          "errors"
+        ],
+        "title": "ImportReport",
+        "type": "object"
+      },
+      "ImportRowError": {
+        "description": "One problem in the file. `row` is the line number as a spreadsheet would show it.",
+        "properties": {
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "row": {
+            "title": "Row",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row",
+          "column",
+          "message"
+        ],
+        "title": "ImportRowError",
         "type": "object"
       },
       "LoginRequest": {
@@ -1846,6 +1944,118 @@
           }
         ],
         "summary": "Create Transaction",
+        "tags": [
+          "ledger"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/transactions/import": {
+      "post": {
+        "operationId": "import_transactions_api_v1_orgs__org_id__transactions_import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Validate only; import nothing. Use it to preview a file.",
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Validate only; import nothing. Use it to preview a file.",
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_transactions_api_v1_orgs__org_id__transactions_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Transactions",
+        "tags": [
+          "ledger"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/transactions/import/template": {
+      "get": {
+        "description": "A ready-to-fill CSV with the expected columns and two example rows.",
+        "operationId": "download_template_api_v1_orgs__org_id__transactions_import_template_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Template",
         "tags": [
           "ledger"
         ]

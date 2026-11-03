@@ -247,6 +247,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orgs/{org_id}/transactions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Transactions */
+        post: operations["import_transactions_api_v1_orgs__org_id__transactions_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orgs/{org_id}/transactions/import/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Template
+         * @description A ready-to-fill CSV with the expected columns and two example rows.
+         */
+        get: operations["download_template_api_v1_orgs__org_id__transactions_import_template_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orgs/{org_id}/transactions/{transaction_id}": {
         parameters: {
             query?: never;
@@ -293,6 +330,11 @@ export interface components {
          * @enum {string}
          */
         AccountType: "bank" | "cash" | "card" | "mobile_money" | "other";
+        /** Body_import_transactions_api_v1_orgs__org_id__transactions_import_post */
+        Body_import_transactions_api_v1_orgs__org_id__transactions_import_post: {
+            /** File */
+            file: string;
+        };
         /** CategoryResponse */
         CategoryResponse: {
             /**
@@ -332,6 +374,36 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+        };
+        /** ImportReport */
+        ImportReport: {
+            /** Error Count */
+            error_count: number;
+            /** Errors */
+            errors: components["schemas"]["ImportRowError"][];
+            /** Filename */
+            filename: string | null;
+            /** Imported Count */
+            imported_count: number;
+            /** Row Count */
+            row_count: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "rejected" | "validated" | "imported";
+        };
+        /**
+         * ImportRowError
+         * @description One problem in the file. `row` is the line number as a spreadsheet would show it.
+         */
+        ImportRowError: {
+            /** Column */
+            column: string | null;
+            /** Message */
+            message: string;
+            /** Row */
+            row: number;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -1189,6 +1261,73 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TransactionResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_transactions_api_v1_orgs__org_id__transactions_import_post: {
+        parameters: {
+            query?: {
+                /** @description Validate only; import nothing. Use it to preview a file. */
+                dry_run?: boolean;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_transactions_api_v1_orgs__org_id__transactions_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_template_api_v1_orgs__org_id__transactions_import_template_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
