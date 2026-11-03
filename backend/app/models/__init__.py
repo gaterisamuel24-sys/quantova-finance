@@ -2,6 +2,7 @@
 
 from app.models.ai_insight import AIInsight
 from app.models.audit_log import AuditLog
+from app.models.billing_event import BillingEvent
 from app.models.category import Category
 from app.models.enums import AccountType, EntryKind, OrgRole, PlatformRole
 from app.models.financial_account import FinancialAccount
@@ -16,6 +17,7 @@ __all__ = [
     "AIInsight",
     "AccountType",
     "AuditLog",
+    "BillingEvent",
     "Category",
     "EntryKind",
     "FinancialAccount",

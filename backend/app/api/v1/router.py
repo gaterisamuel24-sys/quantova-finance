@@ -6,6 +6,7 @@ from app.api.v1 import (
     analytics,
     auth,
     billing,
+    billing_webhooks,
     health,
     imports,
     insights,
@@ -24,3 +25,4 @@ api_router.include_router(analytics.router)
 api_router.include_router(reports.router)
 api_router.include_router(insights.router)
 api_router.include_router(billing.router)
+api_router.include_router(billing_webhooks.router)

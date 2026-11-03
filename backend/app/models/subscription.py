@@ -32,3 +32,6 @@ class Subscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     provider_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True)
     current_period_end: Mapped[datetime | None]
     cancel_at_period_end: Mapped[bool] = mapped_column(default=False, server_default=false())
+    # When the provider produced the event we last applied. Webhooks can arrive out of
+    # order; an event older than this is ignored, so a stale "active" never undoes "canceled".
+    provider_updated_at: Mapped[datetime | None]
