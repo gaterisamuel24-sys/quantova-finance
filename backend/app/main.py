@@ -23,6 +23,7 @@ from app.core.http_hardening import (
 )
 from app.core.logging import configure_logging
 from app.db.session import create_engine, create_sessionmaker
+from app.seo import install_search_routes
 from app.web import mount_frontend, read_frontend_csp
 
 # The largest legitimate request is a 5 MB CSV import; allow some room for the form encoding.
@@ -92,6 +93,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_error_handlers(app)
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    # Before the frontend's catch-all route, which would otherwise answer these addresses.
+    install_search_routes(app, settings)
     if frontend_dist is not None:
         # Last, so every API route takes precedence over the app's catch-all route.
         mount_frontend(app, frontend_dist, api_prefix=settings.api_v1_prefix)

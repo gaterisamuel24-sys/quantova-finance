@@ -9,6 +9,7 @@ import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { GuestOnly, RequireAuth } from "../features/auth/route-guards";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { GuidePage } from "../features/help/GuidePage";
 import { InsightsPage } from "../features/insights/InsightsPage";
 import { LandingPage } from "../features/marketing/LandingPage";
 import { CreateOrganizationPage } from "../features/organizations/CreateOrganizationPage";
@@ -24,6 +25,8 @@ export const routes: RouteObject[] = [
     errorElement: <RouteErrorPage />,
     children: [
       { path: "/", element: <LandingPage /> },
+      // The user guide is public, so people can read it before signing up.
+      { path: "/guide", element: <GuidePage /> },
       {
         element: <GuestOnly />,
         children: [

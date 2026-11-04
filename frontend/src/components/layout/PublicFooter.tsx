@@ -1,7 +1,6 @@
-import { Logo } from "../brand/Logo";
+import { Link } from "react-router";
 
-// Calculated once when the app loads, so rendering stays pure.
-const CURRENT_YEAR = new Date().getFullYear();
+import { Logo } from "../brand/Logo";
 
 export function PublicFooter() {
   return (
@@ -10,8 +9,11 @@ export function PublicFooter() {
         <div className="grid gap-3">
           <Logo />
           <p className="text-muted-foreground">
-            © {CURRENT_YEAR} Quantova Finance. All rights reserved.
+            © {new Date().getFullYear()} Quantova Finance. All rights reserved.
           </p>
+          <Link to="/guide" className="w-fit text-brand hover:underline">
+            How to use Quantova
+          </Link>
         </div>
         <p className="text-muted-foreground md:text-right">
           Quantova Finance provides financial analytics for informational purposes only.
