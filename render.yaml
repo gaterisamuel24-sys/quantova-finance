@@ -1,0 +1,93 @@
+# Render Blueprint: everything Quantova Finance needs in production, defined in one file.
+# Render reads this when you create a Blueprint from the repository, and keeps the
+# services in sync with it afterwards. Docs: https://render.com/docs/blueprint-spec
+#
+# Plans are left out on purpose: Render shows each service's plan and monthly price
+# when you apply the Blueprint, so you choose them knowingly. Do not use the free
+# database plan for real data: it expires and has no backups.
+
+databases:
+  - name: quantova-db
+    postgresMajorVersion: "18"
+    region: frankfurt # the closest available region to Kenya
+    databaseName: quantova
+    user: quantova
+    # No outside access at all: only Quantova's own services, on Render's private network.
+    ipAllowList: []
+
+services:
+  # The app and the API, one origin (see Dockerfile and backend/app/web.py).
+  - type: web
+    name: quantova
+    runtime: docker
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    # Database migrations run before each new version goes live. If they fail, the
+    # deploy stops and the previous version keeps running.
+    preDeployCommand: alembic upgrade head
+    autoDeploy: true # deploy every change merged into main
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quantova-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: quantova-redis
+          property: connectionString
+      # Generated once by Render (long and random) and never stored in the repository.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      # The browser only talks to its own origin, so no other site needs CORS access.
+      - key: CORS_ORIGINS
+        value: "[]"
+      # Secrets you enter in the Render dashboard (sync: false = never in this file).
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS
+        sync: false
+
+  # Rate limits and short-lived counters. Not exposed to the internet.
+  - type: keyvalue
+    name: quantova-redis
+    region: frankfurt
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+  # Daily housekeeping: delete refresh tokens that expired more than 7 days ago.
+  - type: cron
+    name: quantova-token-cleanup
+    runtime: docker
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "17 3 * * *" # 03:17 UTC every day
+    dockerCommand: python -m app.cli purge-expired-tokens
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quantova-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: quantova-redis
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        fromService:
+          type: web
+          name: quantova
+          envVarKey: JWT_SECRET_KEY
+      - key: ENVIRONMENT
+        value: production

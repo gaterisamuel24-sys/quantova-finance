@@ -4,6 +4,7 @@ Run in development with:
     uv run uvicorn app.main:create_app --factory --reload
 """
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,18 +14,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from app.api.v1.router import api_router
-from app.core.config import Settings, get_settings
+from app.core.config import Settings, configuration_warnings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.http_hardening import (
     BodySizeLimitMiddleware,
     RequestIdMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.core.logging import configure_logging
 from app.db.session import create_engine, create_sessionmaker
 from app.web import mount_frontend, read_frontend_csp
 
 # The largest legitimate request is a 5 MB CSV import; allow some room for the form encoding.
 MAX_REQUEST_BYTES = 6 * 1024 * 1024
+
+logger = logging.getLogger("app.startup")
 
 
 @asynccontextmanager
@@ -47,8 +51,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build and configure a FastAPI application instance."""
+    # Unsafe production settings stop here: Settings() refuses them (app/core/config.py).
     settings = settings or get_settings()
     is_production = settings.environment == "production"
+    configure_logging(settings)
+    for warning in configuration_warnings(settings):
+        logger.warning(warning)
 
     app = FastAPI(
         title=settings.app_name,

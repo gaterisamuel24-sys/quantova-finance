@@ -20,6 +20,9 @@ def create_engine(settings: Settings) -> AsyncEngine:
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10,
+        # Database errors normally include the query's values (emails, password hashes,
+        # amounts). Outside local development they are left out of errors and logs.
+        hide_parameters=settings.environment not in ("development", "test"),
     )
 
 
