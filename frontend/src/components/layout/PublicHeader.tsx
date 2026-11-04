@@ -38,6 +38,15 @@ export function PublicHeader() {
               {section.label}
             </a>
           ))}
+          <Link
+            to="/guide"
+            className={cn(
+              "rounded text-muted-foreground transition-colors hover:text-foreground",
+              focusRing,
+            )}
+          >
+            Guide
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">

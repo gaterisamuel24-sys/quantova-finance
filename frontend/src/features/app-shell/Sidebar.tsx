@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  CircleHelp,
   CreditCard,
   FileText,
   LayoutDashboard,
@@ -85,7 +86,20 @@ export function Sidebar({ organization, organizations, onNavigate }: SidebarProp
         )}
       </nav>
 
-      <p className="mt-auto rounded-xl border bg-surface-muted/60 p-3 text-xs text-muted-foreground">
+      <Link
+        to="/guide"
+        onClick={onNavigate}
+        className={cn(
+          "mt-auto flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground",
+          "transition-colors hover:bg-surface-muted hover:text-foreground",
+          focusRing,
+        )}
+      >
+        <CircleHelp className="size-4" aria-hidden="true" />
+        How to use Quantova
+      </Link>
+
+      <p className="rounded-xl border bg-surface-muted/60 p-3 text-xs text-muted-foreground">
         Insights and forecasts are estimates, not financial advice.
       </p>
     </aside>
