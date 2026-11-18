@@ -97,5 +97,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_search_routes(app, settings)
     if frontend_dist is not None:
         # Last, so every API route takes precedence over the app's catch-all route.
-        mount_frontend(app, frontend_dist, api_prefix=settings.api_v1_prefix)
+        mount_frontend(
+            app,
+            frontend_dist,
+            api_prefix=settings.api_v1_prefix,
+            # In production, app pages opened on this server's own address go to the public
+            # website address instead (for example the Vercel site).
+            public_base_url=settings.app_base_url if is_production else None,
+        )
     return app

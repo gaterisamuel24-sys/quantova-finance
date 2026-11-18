@@ -86,3 +86,54 @@ def test_without_a_build_only_the_api_is_served(settings_factory: SettingsFactor
     with TestClient(create_app(settings_factory())) as client:
         assert client.get("/").status_code == 404
         assert client.get("/api/v1/health").status_code == 200
+
+
+@pytest.fixture
+def public_site(
+    settings_factory: SettingsFactory, dist: Path, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[TestClient]:
+    """Production, with the public website on another address (like Vercel)."""
+    monkeypatch.delenv("RENDER_EXTERNAL_URL", raising=False)
+    settings = settings_factory(
+        environment="production",
+        frontend_dist_dir=str(dist),
+        app_base_url="https://quantova.example",
+    )
+    with TestClient(create_app(settings), base_url="https://quantova-api.example") as client:
+        yield client
+
+
+def test_app_pages_on_the_api_address_redirect_to_the_public_site(
+    public_site: TestClient,
+) -> None:
+    response = public_site.get("/guide?from=search", follow_redirects=False)
+
+    assert response.status_code == 308
+    assert response.headers["location"] == "https://quantova.example/guide?from=search"
+
+
+def test_a_forged_host_header_cannot_redirect_elsewhere(public_site: TestClient) -> None:
+    response = public_site.get("/", headers={"host": "evil.example"}, follow_redirects=False)
+
+    assert response.headers["location"] == "https://quantova.example/"
+
+
+def test_the_api_is_never_redirected(public_site: TestClient) -> None:
+    assert public_site.get("/api/v1/health", follow_redirects=False).status_code == 200
+    assert public_site.get("/robots.txt", follow_redirects=False).status_code == 200
+
+
+def test_the_public_address_itself_is_served_normally(
+    settings_factory: SettingsFactory, dist: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("RENDER_EXTERNAL_URL", raising=False)
+    settings = settings_factory(
+        environment="production",
+        frontend_dist_dir=str(dist),
+        app_base_url="https://quantova.example",
+    )
+    with TestClient(create_app(settings), base_url="https://quantova.example") as client:
+        response = client.get("/guide", follow_redirects=False)
+
+    assert response.status_code == 200
+    assert "<div id=root>" in response.text
